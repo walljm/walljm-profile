@@ -1,5 +1,9 @@
-echo "This has loaded walljm's aliases."
-echo ""
+
+#source the work specific profiles
+. C:\Projects\walljm\winprofile\vae.ps1
+. C:\Projects\walljm\winprofile\migo.ps1
+
+$projects = "c:\projects"
 
 function prompt {
     $origLastExitCode = $LASTEXITCODE
@@ -11,22 +15,41 @@ function prompt {
     "$('>' * ($nestedPromptLevel + 1)) "
 }
 
-function cmds { 
+function cmds {
     echo ""
     echo " Misc"
     echo "-----------------------------------------------------------------"
     echo "   grep == sls $args"
     echo "    nst == netstat -n -b"
-	echo "    cdp == cd  e:\projects\"
-	echo "builddb == builds the dynamicbible android app"
-	echo "     mg == runs git $args in every migoiq project dir."
+	echo "    cdp == cd  $projects"
+	echo "   cdop == $projects\vae\ops\packaging"
 	echo "     dc == docker-compose $args"
+	echo "    dco == dc -f docker-compose.yml -f docker-compose.local.yml"
 	echo "     rn == react-native $args"
 	echo "     io == ionic $args"
+	echo "    ioc == ionic cordova $args"
 	echo "    dsh == docker exec -it $args /bin/bash"
-	echo "    psh == docker exec -it predictionio_pio_1 /bin/bash"
     echo ""
-	echo "---------------------------------------------------------------------"
+	echo "  ---------------------------------------------------------------"
+	echo "  git aliases"
+	echo "  ---------------------------------------------------------------"
+	echo "   gt update $branch =>"
+	echo "      git checkout $other --force"
+	echo "		git clean -f -d -x"
+	echo "		git reset --hard"
+	echo ""
+	echo "   gt heads =>"
+	echo "      git branch"
+	echo ""
+	echo "   gt clean =>"
+	echo "		git clean -f -d -x"
+	echo "		git reset --hard"
+	echo ""
+	echo "   gt rebase $t1 $t2 =>"
+	echo "		git checkout $t1"
+	echo "		git rebase $t2"
+	echo ""
+	echo "-----------------------------------------------------------------"
 	echo ""
 	echo ""
 }
@@ -41,14 +64,16 @@ function nst {
 }
 
 function cdp {
-    echo "cd  e:\projects\"
-    cd  e:\projects\
-}
-
-function builddb {
-	cddb
-    cd ..
-	.\build_android.bat $args
+	if ($args)
+	{
+		echo "cd  $projects\$args"
+		cd $projects\$args
+	}
+	else
+	{
+		echo "cd  $projects"
+		cd  $projects
+	}
 }
 
 function dc {
@@ -66,51 +91,50 @@ function io {
 	ionic $args
 }
 
+function ioc {
+	echo "ionic cordova $($args -join ' ')"
+	ionic cordova $args
+}
+
 function dsh {
 	echo "docker exec -it $($args -join ' ') /bin/bash"
 	docker exec -it $args /bin/bash 
 }
 
-function psh {
-	docker exec -it predictionio_pio_1 /bin/bash 
-}
 
-function mg {
-    Set-PSDebug -Trace 2
+function gt {
+	$cmd, $other = $args
 	
-	get-childitem e:\projects\migoiq -directory | foreach-object {
-		cd e:\projects\migoiq	
-		cd $_.Name
-		git $args
-		git status	
-		cd ..
+	if ($cmd -eq "update")
+	{
+		echo "git checkout $other --force"
+		git checkout $other --force
+		git clean -f -d -x
+		git reset --hard
 	}
-
-	Set-PSDebug -Off
+	elseif ($cmd -eq "heads")
+	{
+		git branch
+	}
+	elseif ($cmd -eq "clean")
+	{
+		git clean -f -d -x
+		git reset --hard
+	}
+	elseif ($cmd -eq "rebase")
+	{
+	    $t1, $t2 = $other
+		git checkout $t1
+		git rebase $t2
+	}
+	else
+	{
+		git $cmd $other
+	}
 }
 
-function evars {
-	echo ""
-	echo "Environment Variables Defined in Shell"
-	echo "---------------------------------------------------------------------"
-	echo ""
-	$env:PRISMA_SECRET="asd;lkjsapoifuasdfpoiusad;ljsadf"
-	Write-Host "PRISMA_SECRET: " $env:PRISMA_SECRET
-	$env:PRISMA_ENDPOINT="http://localhost:4466/walljm-prisma/local"
-	Write-Host "PRISMA_ENDPOINT: " $env:PRISMA_ENDPOINT
-	$env:APP_SECRET="asdf;lkjsad;lkjsdafl;kdjsf"
-	Write-Host "APP_SECRET: " $env:APP_SECRET
-	$env:FLEET_TRACKING="true"
-	Write-Host "FLEET_TRACKING: " $env:FLEET_TRACKING
-	$env:ADMIN_TOKEN="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InNlcnZpY2UiOiJ3YWxsam0tcHJpc21hQGxvY2FsIiwicm9sZXMiOlsiYWRtaW4iXX0sImlhdCI6MTUzOTYyNDI5NCwiZXhwIjoxNTQwMjI5MDk0fQ.kHs7jYN1uZfseTSlU2t1hmIQAEjAdVQ7fMZv42mcUZA"
-	Write-Host "ADMIN_TOKEN: " $env:ADMIN_TOKEN
-	$env:ANDROID_HOME="C:\Users\walljm\AppData\Local\Android\Sdk"
-	Write-Host "ANDROID_HOME: " $env:ANDROID_HOME
-	$env:JAVA_HOME="C:\Program Files\Java\jdk1.8.0_121"
-	Write-Host "JAVA_HOME: " $env:JAVA_HOME
-	echo "---------------------------------------------------------------------"
-	echo ""
-}
 
-#evars
+echo "This has loaded walljm's aliases."
+echo ""
+
 cmds
