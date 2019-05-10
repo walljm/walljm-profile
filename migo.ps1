@@ -4,7 +4,7 @@ $migofolder = "$projects\migoiq"
 function mcmds { 
     echo ""
     echo " Migo "
-    echo "-----------------------------------------------------------------"
+    echo " ----------------------------------------------------------------"
     echo "     mg == run git $args on every dir in $migofolder"
 }
 

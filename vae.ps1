@@ -2,7 +2,7 @@ $opsfolder = "$projects\vae\ops"
 function vcmds { 
     echo ""
     echo " VAE "
-    echo "-----------------------------------------------------------------"
+    echo " ----------------------------------------------------------------"
 	echo "   cdop == $opsfolder\packaging"
 	echo "    dco == dc -f docker-compose.yml -f docker-compose.local.yml"
 }

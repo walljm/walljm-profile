@@ -1,9 +1,6 @@
 
-#source the work specific profiles
-. C:\Projects\walljm\winprofile\vae.ps1
-. C:\Projects\walljm\winprofile\migo.ps1
-
 $projects = "c:\projects"
+
 
 function prompt {
     $origLastExitCode = $LASTEXITCODE
@@ -18,7 +15,7 @@ function prompt {
 function cmds {
     echo ""
     echo " Misc"
-    echo "-----------------------------------------------------------------"
+    echo " ----------------------------------------------------------------"
     echo "   grep == sls $args"
     echo "    nst == netstat -n -b"
 	echo "    cdp == cd  $projects"
@@ -29,6 +26,7 @@ function cmds {
 	echo "     io == ionic $args"
 	echo "    ioc == ionic cordova $args"
 	echo "    dsh == docker exec -it $args /bin/bash"
+	echo "   hist == Get-History"
     echo ""
 	echo "  ---------------------------------------------------------------"
 	echo "  git aliases"
@@ -52,6 +50,10 @@ function cmds {
 	echo "-----------------------------------------------------------------"
 	echo ""
 	echo ""
+}
+
+function hist { 
+    get-history
 }
 
 function grep { 
@@ -134,7 +136,11 @@ function gt {
 }
 
 
+echo "-----------------------------------------------------------------"
+#source the work specific profiles
+. C:\Projects\walljm\winprofile\vae.ps1
+. C:\Projects\walljm\winprofile\migo.ps1
+cmds
+
 echo "This has loaded walljm's aliases."
 echo ""
-
-cmds
