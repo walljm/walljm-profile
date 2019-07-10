@@ -66,6 +66,41 @@ function nst {
 }
 
 function cdp {
+	param (
+        [Parameter(Mandatory=$false)]
+        [ArgumentCompleter( {
+            param ( $commandName,
+                    $parameterName,
+                    $wordToComplete,
+                    $commandAst,
+                    $fakeBoundParameters )
+			
+			$dir = "$projects\$wordToComplete"			
+			if ($wordToComplete -eq "")
+			{
+				$dir = "$projects\a"
+			}
+			if ($wordToComplete.EndsWith("\"))
+			{
+				$dir = $dir + "a"
+			}
+			$examine = split-path -path $dir
+			$pre = $examine.Substring($projects.length)
+			if ($pre.length -gt 0)
+			{
+				$pre = "$pre\"
+			}
+			if ($pre.StartsWith("\"))
+			{
+				$pre = $pre.Substring(1)
+			}
+			$test = $wordToComplete.split('\') | select -last 1
+			Get-ChildItem $examine | ?{ $_.PSIsContainer } | select Name | where {$_ -like "*$test*"} | Foreach {"$($pre)$($_.Name)"}
+
+        } )]
+        $args
+      )
+	echo $args
 	if ($args)
 	{
 		echo "cd  $projects\$args"
@@ -134,7 +169,6 @@ function gt {
 		git $cmd $other
 	}
 }
-
 
 echo "-----------------------------------------------------------------"
 #source the work specific profiles

@@ -5,6 +5,7 @@ function vcmds {
     echo " ----------------------------------------------------------------"
 	echo "   cdop == $opsfolder\packaging"
 	echo "    dco == dc -f docker-compose.yml -f docker-compose.local.yml"
+	echo "    ops == demo|test|dev clean|pull"
 }
 
 function cdop {
@@ -30,6 +31,110 @@ function gto {
 	}
 
 	#Set-PSDebug -Off
+}
+
+function ops {
+     param(
+         [Parameter(Mandatory=$false,
+			HelpMessage="If used, does a 'pull' before bring the system up.")]
+		 [Alias("pull")]
+		 [Switch]
+         $p,
+         [Parameter(Mandatory=$false,
+			HelpMessage="If used, does a 'down -v' before bring the system up.")]
+		 [Alias("clean")]
+		 [Switch]
+         $c,
+		 [String]
+		 [Parameter(Mandatory=$true, Position=0,
+			HelpMessage="Enter one of the following: test, demo, dev")]
+		 [ValidateSet("test", "demo", "dev")]
+		 $cmd)
+	
+	if ($cmd -eq "demo")
+	{
+		echo ""
+		echo "Stopping OPS dev..."
+		echo ""
+		cd "$projects\vae\ops\packaging"
+		dco down
+		
+		echo ""
+		echo "Stopping OPS test..."
+		echo ""
+		cd "$projects\vae\test"
+		dco down
+		
+		echo ""
+		echo "Starting OPS demo..."
+		echo ""
+		cd "$projects\vae\demo"
+		if ($c)
+		{
+			dco down -v
+		}
+		if ($p)
+		{
+			dco pull
+		}
+		dco up -d
+	}
+	elseif ($cmd -eq "test")
+	{
+		echo ""
+		echo "Stopping OPS dev..."
+		echo ""
+		cd "$projects\vae\ops\packaging"
+		dco down
+		
+		echo ""
+		echo "Stopping OPS demo..."
+		echo ""
+		cd "$projects\vae\demo"
+		dco down
+		
+		echo ""
+		echo "Starting OPS test..."
+		echo ""
+		cd "$projects\vae\test"
+		if ($c)
+		{
+			dco down -v
+		}
+		if ($p)
+		{
+			dco pull
+		}
+		dco up -d
+	}
+	elseif ($cmd -eq "dev")
+	{
+		echo ""
+		echo "Stopping OPS test..."
+		echo ""
+		cd "$projects\vae\test"
+		dco down
+		
+		echo ""
+		echo "Stopping OPS demo..."
+		echo ""
+		cd "$projects\vae\demo"
+		dco down
+		
+		echo ""
+		echo "Starting OPS dev..."
+		echo ""
+		cd "$projects\vae\ops\packaging"
+		if ($c)
+		{
+			dco down -v
+		}
+		if ($p)
+		{
+			dco pull
+		}
+		dco up -d
+	}
 }
 
 vcmds
