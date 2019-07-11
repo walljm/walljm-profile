@@ -3,13 +3,58 @@ function vcmds {
     echo ""
     echo " VAE "
     echo " ----------------------------------------------------------------"
-	echo "   cdop == $opsfolder\packaging"
+	echo "   cdpo == $opsfolder\packaging"
 	echo "    dco == dc -f docker-compose.yml -f docker-compose.local.yml"
 	echo "    ops == demo|test|dev clean|pull"
 }
 
-function cdop {
-	cd $opsfolder\packaging
+function cdpo {
+	param (
+        [Parameter(Mandatory=$false)]
+        [ArgumentCompleter( {
+            param ( $commandName,
+                    $parameterName,
+                    $wordToComplete,
+                    $commandAst,
+                    $fakeBoundParameters )
+			
+			$dir = "$opsfolder\$wordToComplete"			
+			if ($wordToComplete -eq "")
+			{
+				$dir = "$opsfolder\a"
+			}
+			if ($wordToComplete.EndsWith("\"))
+			{
+				$dir = $dir + "a"
+			}
+			$examine = split-path -path $dir
+			$pre = $examine.Substring($opsfolder.length)
+			if ($pre.length -gt 0)
+			{
+				$pre = "$pre\"
+			}
+			if ($pre.StartsWith("\"))
+			{
+				$pre = $pre.Substring(1)
+			}
+			$test = $wordToComplete.split('\') | select -last 1
+			Get-ChildItem $examine | ?{ $_.PSIsContainer } | select Name | where {$_ -like "*$test*"} | Foreach {"$($pre)$($_.Name)"}
+
+        } )]
+        $args
+      )
+	echo $args
+	echo $args
+	if ($args)
+	{
+		echo "cd $opsfolder\$args"
+		cd $opsfolder\$args
+	}
+	else
+	{
+		echo "cd $opsfolder\packaging"
+		cd  $opsfolder\packaging
+	}
 }
 function dco {
  docker-compose -f docker-compose.yml -f docker-compose.local.yml $args
