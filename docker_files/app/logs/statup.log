@@ -1,0 +1,3 @@
+2019/10/31 17:24:28 INFO: Starting Statping v0.80.64
+2019/10/31 17:24:28 ERROR: config.yml file not found at /app/config.yml - starting in setup mode
+2019/10/31 17:24:28 INFO: Statping HTTP Server running on http://0.0.0.0:8080
