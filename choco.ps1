@@ -6,3 +6,4 @@ choco upgrade powertoys -y
 choco upgrade powershell-core -y
 choco upgrade openssh -y
 choco upgrade nodejs -y
+choco upgrade mkcert -y
