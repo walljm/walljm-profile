@@ -8,10 +8,19 @@ function prompt
 
     $curPath = $ExecutionContext.SessionState.Path.CurrentLocation.Path
 
-    Write-Host $curPath -ForegroundColor DarkCyan -NoNewline
+    Write-Host $curPath -ForegroundColor Yellow -NoNewline
     $LASTEXITCODE = $origLastExitCode
     "$('>' * ($nestedPromptLevel + 1)) "
 }
+
+# function sudo {
+   # param (
+       # [ScriptBlock]
+       # $code
+   # ) 
+   # # Elevate our permissions for this first.
+   # Start-Process "pwsh.exe" -ArgumentList "-Command $code" -WindowStyle hidded -Verb RunAs -RedirectStandardError &2 -RedirectStandardOutput &1 
+# }
 
 function cmds
 {
@@ -148,6 +157,11 @@ function dsh
     docker exec -it $args /bin/bash 
 }
 
+function dcsh
+{
+    echo "docker exec -it $($args -join ' ') /bin/bash"
+    dc exec $args
+}
 
 function gt
 {
@@ -180,6 +194,9 @@ function gt
         git $cmd $other
     }
 }
+
+set-alias -Name routes -Value get-netroute
+set-alias -Name ip -Value get-netipaddress
 
 echo "-----------------------------------------------------------------"
 #source the work specific profiles
