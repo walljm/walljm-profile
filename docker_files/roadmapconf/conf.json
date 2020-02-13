@@ -13,8 +13,8 @@
   },
   "IdentityServer": {
     "Key": {
-      "FilePath": "./conf/mycert.pfx",
-      "Password": "sda8923g234kl5bjdsf094wy9sfph",
+      "FilePath": "./conf/localhost.pfx",
+      "Password": "asdfjiuyasdfiuoqwerlqwerbsdasdoiyqwerhasd",
       "Type": "File"
     }
   },
@@ -23,8 +23,8 @@
       "HTTPS": {
         "Url": "https://*:443",
         "Certificate": {
-          "Path": "./conf/mycert.pfx",
-          "Password": "sda8923g234kl5bjdsf094wy9sfph"
+          "Path": "./conf/localhost.pfx",
+          "Password": "asdfjiuyasdfiuoqwerlqwerbsdasdoiyqwerhasd"
         }
       }
     }

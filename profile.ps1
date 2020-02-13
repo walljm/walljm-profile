@@ -110,7 +110,7 @@ function cdp
                     $pre = $pre.Substring(1)
                 }
                 $test = $wordToComplete.split('\') | Select-Object -last 1
-            Get-ChildItem $examine | Where-Object { $_.PSIsContainer } | Select-Object Name | Where-Object { $_ -like "*$test*" } | ForEach-Object { "$($pre)$($_.Name)" }
+            Get-ChildItem $examine | Where-Object { $_.PSIsContainer } | Select-Object Name | Where-Object { $_ -like "*$test*" } | ForEach-Object { "$($pre)$($_.Name)\" }
 
     } )]
 $args
@@ -195,6 +195,7 @@ function gt
     }
 }
 
+set-alias -Name graph -Value show-graph
 set-alias -Name routes -Value get-netroute
 set-alias -Name ip -Value get-netipaddress
 

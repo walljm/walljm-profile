@@ -16,13 +16,12 @@ services:
       --sslcert /certs/mycert.crt
       --sslkey /certs/mycert.key
   jiraroadmap:
-    image: walljm/roadmap:latest
+    image: registry.gitlab.com/vaeit/jiraroadmap:latest
     restart: always
     ports:
       - "7443:443"
     volumes:
       - ./roadmapconf:/app/conf
-
       
 volumes:
   portainer_data:
