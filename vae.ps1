@@ -69,7 +69,7 @@ else
 }
 function dco
 {
-    docker-compose -f docker-compose.yml -f docker-compose.local.yml $args
+    docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml $args
 }
 
 function ops
@@ -211,7 +211,7 @@ function ops
         echo "Starting OPS $cmd..."
         echo ""
 		echo "dco up -d"
-        dco up -d
+        dco up -d --remove-orphans
 
         if ($h)
         {

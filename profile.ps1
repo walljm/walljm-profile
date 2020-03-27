@@ -37,7 +37,6 @@ function cmds
     echo "     io == ionic $args"
     echo "    ioc == ionic cordova $args"
     echo "    dsh == docker exec -it $args /bin/bash"
-    echo "   hist == Get-History"
     echo ""
     echo "  ---------------------------------------------------------------"
     echo "  git aliases"
@@ -61,11 +60,6 @@ function cmds
     echo "-----------------------------------------------------------------"
     echo ""
     echo ""
-}
-
-function hist
-{ 
-    get-history
 }
 
 function grep
@@ -165,7 +159,7 @@ function dcsh
 
 function gt
 {
-    $cmd, $other = $args
+    $cmd, $other, $other2 = $args
     
     if ($cmd -eq "update")
     {
@@ -189,14 +183,26 @@ function gt
         git checkout $t1
         git rebase $t2
     }
+	elseif (($cmd -eq "contracts") -and ($other -eq "pull"))
+	{
+		git subtree pull --prefix src/ITPIE.Contracts --squash contracts $other2
+	}
+	elseif (($cmd -eq "contracts") -and ($other -eq "push"))
+	{
+		git subtree push --prefix src/ITPIE.Contracts --squash contracts $other2
+	}
     else
     {
         git $cmd $other
     }
 }
 
+
+function routes{
+ get-netroute -IncludeAllCompartments $args
+}
+set-alias -Name ifcs -Value get-netadapter
 set-alias -Name graph -Value show-graph
-set-alias -Name routes -Value get-netroute
 set-alias -Name ip -Value get-netipaddress
 
 echo "-----------------------------------------------------------------"

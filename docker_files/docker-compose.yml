@@ -4,24 +4,24 @@ services:
   portainer:
     image: portainer/portainer
     restart: always
-    ports:
-      - '9443:9000'
+    command: -H unix:///var/run/docker.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./certs:/certs
       - portainer_data:/data
-    command:
-      -H unix:///var/run/docker.sock
-      --ssl
-      --sslcert /certs/mycert.crt
-      --sslkey /certs/mycert.key
   jiraroadmap:
     image: registry.gitlab.com/vaeit/jiraroadmap:latest
     restart: always
-    ports:
-      - "7443:443"
     volumes:
       - ./roadmapconf:/app/conf
-      
+  nginx:
+    image: nginx:1.15-alpine
+    restart: unless-stopped
+    volumes:
+      - ./proxy:/etc/nginx/conf.d
+      - ./certs:/etc/letsencrypt
+    ports:
+      - "80:80"
+      - "443:443"
+
 volumes:
   portainer_data:
