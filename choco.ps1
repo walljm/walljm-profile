@@ -8,3 +8,5 @@ choco upgrade openssh -y
 choco upgrade nodejs -y
 choco upgrade mkcert -y
 choco install gnuplot -y
+
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All

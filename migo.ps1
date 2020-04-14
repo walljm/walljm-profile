@@ -1,25 +1,9 @@
 
 $migofolder = "$projects\migoiq\migo-retail"
 
-function mcmds { 
-    echo ""
-    echo " Migo "
-    echo " ----------------------------------------------------------------"
-    echo "     mg == run git $args on every dir in $migofolder"
-}
-
-function mg {
-    Set-PSDebug -Trace 2
-	
-	get-childitem $migofolder -directory | foreach-object {
-		cd $migofolder	
-		cd $_.Name
-		git $args
-		git status	
-		cd ..
-	}
-
-	Set-PSDebug -Off
+function mcmds
+{
+    echo "   cdpm == $migofolder"
 }
 
 function cdpm
@@ -63,33 +47,33 @@ function cdpm
                     $pre = $pre.Substring(1)
                 }
                 $test = $wordToComplete.split('\') | Select-Object -last 1
-            Get-ChildItem $examine | Where-Object { $_.PSIsContainer } | Select-Object Name | Where-Object { $_ -like "*$test*" } | ForEach-Object { "$($pre)$($_.Name)" }
+                Get-ChildItem $examine | Where-Object { $_.PSIsContainer } | Select-Object Name | Where-Object { $_ -like "*$test*" } | ForEach-Object { "$($pre)$($_.Name)" }
 
-		} )]
-		$args
-	)
-	if ($a)
-	{
-		echo "cd $migofolder\app-retail-consumer"
-		cd $migofolder\app-retail-consumer
-		return
-	}
-	if ($s)
-	{
-		echo "cd $migofolder\server-retail-core\MigoIQ.Retail.Server\"
-		cd $migofolder\server-retail-core\MigoIQ.Retail.Server\
-		return
-	}
+            } )]
+        $args
+    )
+    if ($a)
+    {
+        echo "cd $migofolder\app-retail-consumer"
+        cd $migofolder\app-retail-consumer
+        return
+    }
+    if ($s)
+    {
+        echo "cd $migofolder\server-retail-core\MigoIQ.Retail.Server\"
+        cd $migofolder\server-retail-core\MigoIQ.Retail.Server\
+        return
+    }
 
-	if ($args)
-	{
-		echo "cd $migofolder\$args"
-		cd $migofolder\$args
-	}
-	else
-	{
-		echo "cd $migofolder"
-		cd  $migofolder
-	}
+    if ($args)
+    {
+        echo "cd $migofolder\$args"
+        cd $migofolder\$args
+    }
+    else
+    {
+        echo "cd $migofolder"
+        cd  $migofolder
+    }
 }
 mcmds

@@ -1,0 +1,53 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/ubuntu1804"
+  
+  config.vm.provider "hyperv" do |h|
+    h.vmname = "Ubuntu"
+    h.vm_integration_services = {
+      guest_service_interface: true,
+      heartbeat: true,
+      key_value_pair_exchange: true,
+      shutdown: true,
+      time_synchronization: true,
+      vss: true,
+    }
+  end
+
+
+  config.vm.provision "file", source: "./dnsmasq.conf", destination: "~/dnsmasq.conf"
+  config.vm.provision "file", source: "./resolv.conf", destination: "~/resolv.conf"
+    
+  config.vm.provision "shell", inline: <<-SHELL
+    set -eux
+
+    apt-get update -qq
+    apt-get install -qq -y --no-install-recommends \
+        openconnect \
+        dnsmasq \
+        traceroute
+    echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
+    echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
+
+    sudo apt-get -y install iptables-persistent
+
+    sudo systemctl stop systemd-resolved
+    sudo systemctl disable systemd-resolved
+
+    sudo rm /etc/resolv.conf
+    sudo rm /etc/dnsmasq.conf
+
+    sudo mv /home/vagrant/dnsmasq.conf /etc/dnsmasq.conf
+    sudo mv /home/vagrant/resolv.conf /etc/resolv.conf
+
+    sudo systemctl restart dnsmasq
+
+    sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+    sudo iptables -A FORWARD -o tun0 -i eth0 -s 192.168.1.0/24 -m conntrack --ctstate NEW -j ACCEPT
+    sudo iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+    sudo iptables -A POSTROUTING -t nat -j MASQUERADE
+    sudo iptables-save > /etc/iptables/rules.v4
+  SHELL
+end

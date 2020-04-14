@@ -1,13 +1,10 @@
 $opsfolder = "$projects\vae\ops"
 function vcmds
 { 
-    echo ""
-    echo " VAE "
-    echo " ----------------------------------------------------------------"
     echo "   cdpo == $opsfolder\packaging"
     echo "    dco == dc -f docker-compose.yml -f docker-compose.local.yml"
-    echo "    ops == demo|test|dev|help clean|pull|headless|down"
-	echo "  npull == runs git pull on every director in the $opsfolder"
+    echo "    ops == demo|test|dev|help -c|clean -p|pull -h|headless -d|down -gp|gitpull"
+    echo ""
 }
 
 function cdpo
@@ -51,25 +48,27 @@ function cdpo
                     $pre = $pre.Substring(1)
                 }
                 $test = $wordToComplete.split('\') | Select-Object -last 1
-            Get-ChildItem $examine | Where-Object { $_.PSIsContainer } | Select-Object Name | Where-Object { $_ -like "*$test*" } | ForEach-Object { "$($pre)$($_.Name)" }
+                Get-ChildItem $examine | Where-Object { $_.PSIsContainer } | Select-Object Name | Where-Object { $_ -like "*$test*" } | ForEach-Object { "$($pre)$($_.Name)" }
 
-    } )]
-$args
-)
-if ($args)
-{
-    echo "cd $opsfolder\$args"
-    cd $opsfolder\$args
-}
-else
-{
-    echo "cd $opsfolder\packaging"
-    cd  $opsfolder\packaging
-}
+            } )]
+        $args
+    )
+    if ($args)
+    {
+        echo "cd $opsfolder\$args"
+        cd $opsfolder\$args
+    }
+    else
+    {
+        echo "cd $opsfolder\packaging"
+        cd  $opsfolder\packaging
+    }
 }
 function dco
 {
+	push-location $opsfolder\packaging;
     docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml $args
+	pop-location;
 }
 
 function ops
@@ -95,22 +94,45 @@ function ops
         [Alias("down")]
         [Switch]
         $d,
+        
+        [Parameter(Mandatory = $false,
+            HelpMessage = "If used, does a git pull in ever folder in the ops folder.")]
+        [Alias("gp")]
+        [Switch]
+        $GitPull,
         [String]
         [Parameter(Mandatory = $false, Position = 0,
-            HelpMessage = "Enter one of the following: test, demo, dev")]
-        [ValidateSet("test", "demo", "dev", "")]
+            HelpMessage = "Enter one of the following: test, demo, dev, git")]
+        [ValidateSet("test", "demo", "dev", "git", "")]
         $cmd)
-		
+
+	push-location;
+    
+	if ($GitPull)
+    {
+        get-childitem $opsfolder -directory | where-object { $_.Name -Match "^\w" } | foreach-object { 
+            cd "$opsfolder\$($_.Name)";
+            echo $_.Name;
+			echo "";
+            git pull;
+			echo "---";
+        }
+		pop-location;
+        return
+    }
     if ($cmd -eq "help")
     {
         echo ""
-        echo "Syntax: ops `$cmd -p|pull -c|clean -h|headless -d|down"
+        echo "Syntax: ops `$cmd -p|pull -c|clean -h|headless -d|down -gp|gitpull"
         echo ""
         echo " `$cmd         - one of the following: 'test', 'demo', 'dev'"
         echo " -p|pull      - If used, does a 'pull' before bring the system up."
         echo " -c|clean     - If used, does a 'down -v' before bring the system up."
         echo " -h|headless  - If used, stops the webclient and itpie-api containers, so you can run them from source."
-		echo " -d|down      - If used, stops all services using docker-compose down"
+        echo " -d|down      - If used, stops all services using docker-compose down"
+		echo " -gp|gitpull  - If used, does a gil pull inside of each directory in the $opsfolder"
+		
+		pop-location;
         return
     }
 	
@@ -120,16 +142,16 @@ function ops
         echo "Stopping OPS dev..."
         echo ""
         echo "$projects\vae\ops\packaging"
-		cd "$projects\vae\ops\packaging"
-		echo "dco down"
+        cd "$projects\vae\ops\packaging"
+        echo "dco down"
         dco down
         
         echo ""
         echo "Stopping OPS test..."
         echo ""
-		echo "$projects\vae\test"
+        echo "$projects\vae\test"
         cd "$projects\vae\test"
-		echo "dco down"
+        echo "dco down"
         dco down
         
         echo "$projects\vae\demo"
@@ -141,16 +163,16 @@ function ops
         echo "Stopping OPS dev..."
         echo ""
         echo "$projects\vae\ops\packaging"
-		cd "$projects\vae\ops\packaging"
-		echo "dco down"
+        cd "$projects\vae\ops\packaging"
+        echo "dco down"
         dco down
         
         echo ""
         echo "Stopping OPS demo..."
         echo ""
-		echo "$projects\vae\demo"
+        echo "$projects\vae\demo"
         cd "$projects\vae\demo"
-		echo "dco down"
+        echo "dco down"
         dco down
         
         echo "$projects\vae\test"
@@ -163,7 +185,7 @@ function ops
         echo ""
         echo "$projects\vae\test"
         cd "$projects\vae\test"
-		echo "dco down"
+        echo "dco down"
         dco down
         
         echo ""
@@ -171,11 +193,11 @@ function ops
         echo ""
         echo "$projects\vae\demo"
         cd "$projects\vae\demo"
-		echo "dco down"
+        echo "dco down"
         dco down
         
-		echo "$projects\vae\ops\packaging"
-		cd "$projects\vae\ops\packaging"
+        echo "$projects\vae\ops\packaging"
+        cd "$projects\vae\ops\packaging"
     }
     
         
@@ -184,7 +206,7 @@ function ops
         echo ""
         echo "Cleaning OPS $cmd..."
         echo ""
-		echo "dco down -v"
+        echo "dco down -v"
         dco down -v
     }
 
@@ -193,7 +215,7 @@ function ops
         echo ""
         echo "Pulling OPS $cmd..."
         echo ""
-		echo "dco pull"
+        echo "dco pull"
         dco pull
     }
 
@@ -202,7 +224,7 @@ function ops
         echo ""
         echo "Stopping OPS $cmd..."
         echo ""
-		echo "dco down"
+        echo "dco down"
         dco down
     }
     else 
@@ -210,29 +232,19 @@ function ops
         echo ""
         echo "Starting OPS $cmd..."
         echo ""
-		echo "dco up -d"
+        echo "dco up -d"
         dco up -d --remove-orphans
 
         if ($h)
         {
-			echo "dco stop itpie-api"
+            echo "dco stop itpie-api"
             dco stop itpie-api
-			echo "dco stop webclient"
+            echo "dco stop webclient"
             dco stop webclient
         }
     }
-}
-
-
-function npull {
 	
-	get-childitem $opsfolder -directory | where-object {$_.Name -Match "^\w"} | foreach-object { 
-		cd $opsfolder; 
-		cd $_.Name; 
-		get-location;
-		git pull;
-	    cd ..;
-	}
+	pop-location;
 }
 
 vcmds

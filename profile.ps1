@@ -276,6 +276,13 @@ function show
     }
 }
 
+function aliases
+{
+	cmds
+	vcmds
+	mcmds
+}
+
 set-alias -Name io -Value ionic
 set-alias -Name rn -Value react-native
 
