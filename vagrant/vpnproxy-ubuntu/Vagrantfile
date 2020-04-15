@@ -3,9 +3,10 @@
 
 Vagrant.configure("2") do |config|
   config.vm.box = "generic/ubuntu1804"
+  config.vm.hostname = "vpnproxy-ubuntu"
   
   config.vm.provider "hyperv" do |h|
-    h.vmname = "Ubuntu"
+    h.vmname = "VpnProxy_Ubuntu1804"
     h.vm_integration_services = {
       guest_service_interface: true,
       heartbeat: true,

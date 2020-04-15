@@ -1,0 +1,63 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/fedora30"
+  config.vm.hostname = "itpie-fedora"
+  
+  config.vm.provider "hyperv" do |h|
+    h.vmname = "ITPIE_Fedora30"
+    h.vm_integration_services = {
+      guest_service_interface: true,
+      heartbeat: true,
+      key_value_pair_exchange: true,
+      shutdown: true,
+      time_synchronization: true,
+      vss: true,
+    }
+  end
+   
+  config.vm.provision "shell", inline: <<-SHELL
+    set -eux
+    sudo mkdir /itpie
+    sudo chmod 777 /itpie
+    ls -laF
+    pwd
+    
+  SHELL
+
+  config.vm.provision "file", source: "../itpie-ops.tar", destination: "/itpie/itpie-ops.tar"
+  
+  config.vm.provision "shell", inline: <<-SHELL
+    set -eux
+    sudo dnf -y install dnf-plugins-core
+    
+    sudo dnf config-manager \
+    --add-repo \
+    https://download.docker.com/linux/fedora/docker-ce.repo
+    
+    sudo dnf -y install docker-ce docker-ce-cli containerd.io
+
+    sudo systemctl start docker
+
+    sudo curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+    sudo chmod +x /usr/local/bin/docker-compose
+
+    cd /itpie
+    sudo tar -xf itpie-ops.tar
+    sudo rm ./itpie-ops.tar
+    sudo chmod 644 *.yml
+    sudo chmod 644 VERSION
+    sudo chmod 644 LICENSE
+    sudo chmod 755 conf
+
+    sudo docker load -i /itpie/images.tar.gz
+    sudo docker-compose -p itpie -f docker-compose.yml -f docker-compose.override.yml up -d --remove-orphans
+
+    cd /
+    sudo chmod 755 /itpie
+
+  SHELL
+
+end
