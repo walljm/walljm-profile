@@ -71,11 +71,11 @@ function dco
     $active = [System.Environment]::GetEnvironmentVariable('ActiveOpsEnv' , [System.EnvironmentVariableTarget]::User)
     if ($active -ne "")
     {
-        docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $active $args
+        docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $active $args
     }
     else
     {
-        docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml $args
+        docker-compose -f docker-compose.yml -f docker-compose.local.yml $args
     }
     Pop-Location
 }
@@ -165,25 +165,25 @@ function ops
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
         if ($active -ne $null)
         {
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $active down"
-            docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $active down
+            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $active down"
+            docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $active down
         }
         else
         {
             if ($cmd -ne "demo")
             {
-                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p demo down"
-                docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p demo down
+                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p demo down"
+                docker-compose -f docker-compose.yml -f docker-compose.local.yml -p demo down
             }
             if ($cmd -ne "test")
             {
-                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p test down"
-                docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p test down
+                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p test down"
+                docker-compose -f docker-compose.yml -f docker-compose.local.yml -p test down
             }
             if ($cmd -ne "dev")
             {
-                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p dev down"
-                docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p dev down
+                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p dev down"
+                docker-compose -f docker-compose.yml -f docker-compose.local.yml -p dev down
             }
         }
     }
@@ -193,8 +193,8 @@ function ops
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
         Write-Host  " Pulling OPS $cmd..."  -ForegroundColor Yellow
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml pull"
-        docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml pull
+        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml pull"
+        docker-compose -f docker-compose.yml -f docker-compose.local.yml pull
     }
 
     $stack = "itpie_$cmd"
@@ -209,8 +209,8 @@ function ops
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
         Write-Host  " Stopping OPS $stack..."  -ForegroundColor Yellow
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $stack down"
-        docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $stack down
+        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack down"
+        docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack down
         [System.Environment]::SetEnvironmentVariable('ActiveOpsEnv', "" , [System.EnvironmentVariableTarget]::User)
     }
     else 
@@ -220,23 +220,23 @@ function ops
             Write-Host "---------------------------------------------"  -ForegroundColor Yellow
             Write-Host  " Cleaning OPS $stack..."  -ForegroundColor Yellow
             Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $stack down -v"
-            docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $stack down -v
+            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack down -v"
+            docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack down -v
         }
 
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
         Write-Host  " Starting OPS $stack..."  -ForegroundColor Yellow
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $stack up -d --remove-orphans"
+        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack up -d --remove-orphans"
         [System.Environment]::SetEnvironmentVariable('ActiveOpsEnv', $stack , [System.EnvironmentVariableTarget]::User)
-        docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $stack up -d --remove-orphans
+        docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack up -d --remove-orphans
 
         if ($h)
         {
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $stack stop itpie-api"
-            docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $stack stop itpie-api
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $stack stop webclient"
-            docker-compose -f docker-compose.yml -f docker-compose.local.dev.yml -p $stack stop webclient
+            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack stop itpie-api"
+            docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack stop itpie-api
+            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack stop webclient"
+            docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack stop webclient
         }
     }	
 
@@ -308,6 +308,34 @@ function vpn
     Write-Host  " -v|vpn      - The ip address of the vpn proxy"
 		
     pop-location;
+    return
+
+}
+
+
+function nf
+{
+    param(
+        [String]
+        [Parameter(Mandatory = $true, Position = 0,
+            HelpMessage = "The name of a network: one, five, large, etc...")]
+        $cmd,
+        [String]
+        [Parameter(Mandatory = $false, Position = 1,
+            HelpMessage = "Logging level: 0==none, 1=basic, 2=verbose, 3=extra verbose")]
+        $loglevel)
+    if ($cmd -ne $null)
+    {
+        ssh -t itpie@faker.dev "/bin/bash /home/itpie/fake.sh $($cmd) $($loglevel)"
+        return
+    }
+
+    Write-Host  ""
+    Write-Host  "Syntax: nf cmd"
+    Write-Host  ""
+    Write-Host  " cmd         - name of one of the fake networks: small, med, large, xlarge, etc..."
+    Write-Host  " loglevel    - logging level: 0==none, 1=basic, 2=verbose, 3=extra verbose"
+
     return
 
 }

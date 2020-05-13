@@ -274,6 +274,12 @@ function show
                 Sort-Object InterfaceIndex | `
                 Format-Table -Property InterfaceIndex, InterfaceAlias, IPAddress, PrefixLength, PrefixOrigin, Type, ValidLifetime
     }
+    elseif ($cmd -like "arp*")
+    {
+        Get-NetNeighbor -AddressFamily IPv4 -IncludeAllCompartments | `
+                Sort-Object InterfaceIndex, State, IPAddress | `
+                Format-Table -Property IPAddress, LinkLayerAddress, InterfaceIndex, InterfaceAlias, State
+    }
 }
 
 function aliases

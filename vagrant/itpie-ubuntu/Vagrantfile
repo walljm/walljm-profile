@@ -26,7 +26,7 @@ Vagrant.configure("2") do |config|
     
   SHELL
 
-  config.vm.provision "file", source: "../itpie-ops.tar", destination: "/itpie/itpie-ops.tar"
+  config.vm.provision "file", source: "./disn.tar", destination: "/itpie/disn.tar"
   
   config.vm.provision "shell", inline: <<-SHELL
     set -eux
@@ -55,15 +55,15 @@ Vagrant.configure("2") do |config|
     sudo chmod +x /usr/local/bin/docker-compose
 
     cd /itpie
-    sudo tar -xf itpie-ops.tar
-    sudo rm ./itpie-ops.tar
+    sudo tar -xf disn.tar
+    sudo rm ./disn.tar
     sudo chmod 644 *.yml
     sudo chmod 644 VERSION
     sudo chmod 644 LICENSE
     sudo chmod 755 conf
 
-    sudo docker load -i /itpie/images.tar.gz
-    sudo docker-compose -p itpie -f docker-compose.yml -f docker-compose.override.yml up -d --remove-orphans
+    sudo docker load -i /itpie/images.tar
+    sudo docker-compose -p itpie -f docker-compose.yml -f docker-compose.local.dev.yml up -d --remove-orphans
 
     cd /
     sudo chmod 755 /itpie
