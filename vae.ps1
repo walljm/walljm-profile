@@ -1,10 +1,14 @@
 $opsfolder = "$projects\vae\ops"
+$miscfolder = "$projects\vae\misc"
+$engfolder = "$projects\vae\eng"
 
 function vcmds
 { 
     Write-Host  "   cdpo == $opsfolder\packaging"
     Write-Host  "    dco == dc -f docker-compose.yml -f docker-compose.local.yml"
     Write-Host  "    ops == demo|test|dev|help -c|clean -p|pull -h|headless -d|down -gp|gitpull"
+    Write-Host  "    vpn == vpn enable|disable|start -i|ifIndex -v|vpn"
+    Write-Host  "    dev == dev dbd|dbdate $args"
     Write-Host  ""
 }
 
@@ -79,12 +83,14 @@ function dco
     }
     Pop-Location
 }
+
 function dcd
 {
     push-location $projects\vae\disn\src\packaging;
     docker-compose -p disn -f docker-compose.yml -f docker-compose.local.dev.yml $args
     pop-location;
 }
+
 function ops
 {
     param(
@@ -108,12 +114,6 @@ function ops
         [Alias("down")]
         [Switch]
         $d,
-        
-        [Parameter(Mandatory = $false,
-            HelpMessage = "If used, does a git pull in ever folder in the ops folder.")]
-        [Alias("gp")]
-        [Switch]
-        $GitPull,
         [String]
         [Parameter(Mandatory = $false, Position = 0,
             HelpMessage = "Enter one of the following: test, demo, dev, git")]
@@ -122,20 +122,7 @@ function ops
 
     push-location;
     
-    if ($GitPull)
-    {
-        Write-Host  "";
-        get-childitem $opsfolder -directory | where-object { $_.Name -Match "^\w" } | foreach-object { 
-            cd "$opsfolder\$($_.Name)";
-            Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-            Write-Host " $($_.Name)" -ForegroundColor Yellow
-            Write-Host "---------------------------------------------" -ForegroundColor Yellow
-            git pull;
-            Write-Host  "";
-        }
-        pop-location;
-        return
-    }
+    
     if ($cmd -eq "help")
     {
         Write-Host  ""
@@ -146,7 +133,6 @@ function ops
         Write-Host  " -c|clean     - If used, does a 'down -v' before bring the system up."
         Write-Host  " -h|headless  - If used, stops the webclient and itpie-api containers, so you can run them from source."
         Write-Host  " -d|down      - If used, stops all services using docker-compose down"
-        Write-Host  " -gp|gitpull  - If used, does a gil pull inside of each directory in the $opsfolder"
 		
         pop-location;
         return
@@ -312,6 +298,60 @@ function vpn
 
 }
 
+function dev
+{
+    param(
+        [String]
+        [Parameter(Mandatory = $true, Position = 0,
+            HelpMessage = "Action: dbdate|dbd gp|gitpull")]
+        $action,
+        [String]
+        [Parameter(Mandatory = $false, Position = 1,
+            HelpMessage = "Additional args")]
+        $args)
+    if ($action -ne $null)
+    {
+        if (($action -eq 'dbdate') -or ($action -eq 'dbd'))
+        {
+            Write-Host "Migration sent to clipboard: $((Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmss'))$args"
+            Set-Clipboard -V "$((Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmss'))$args"
+            return
+        }
+
+        if (($action -eq 'gitpull') -or ($action -eq 'gp'))
+        {
+            gitPull $opsfolder;
+            gitPull $miscfolder;
+            gitPull $engfolder;
+
+            return
+        }
+    }
+
+    Write-Host  ""
+    Write-Host  "Syntax: dev cmd $args"
+    Write-Host  ""
+    Write-Host  " dbd|dbdate  - Creates a date stamp in the format used for migrations. "
+    Write-Host  " gp|gitpull  - If used, does a gil pull inside of each directory in the $opsfolder"
+
+    return
+
+}
+
+function gitPull
+{
+    $folder = $args;
+    Write-Host  "";
+    get-childitem $folder -directory | where-object { $_.Name -Match "^\w" } | foreach-object { 
+        cd "$folder\$($_.Name)";
+        Write-Host "---------------------------------------------"  -ForegroundColor Yellow
+        Write-Host " $($_.Name)" -ForegroundColor Yellow
+        Write-Host "---------------------------------------------" -ForegroundColor Yellow
+        git pull;
+        Write-Host  "";
+    }
+    return
+}
 
 function nf
 {
