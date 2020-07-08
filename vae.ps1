@@ -5,7 +5,7 @@ $engfolder = "$projects\vae\eng"
 function vcmds
 { 
     Write-Host  "   cdpo == $opsfolder\packaging"
-    Write-Host  "    dco == dc -f docker-compose.yml -f docker-compose.local.yml"
+    Write-Host  "    dco == dc -f docker-compose.yml -f docker-compose.walljm.yml"
     Write-Host  "    ops == demo|test|dev|help -c|clean -p|pull -h|headless -d|down -gp|gitpull"
     Write-Host  "    vpn == vpn enable|disable|start -i|ifIndex -v|vpn"
     Write-Host  "    dev == dev dbd|dbdate $args"
@@ -75,20 +75,13 @@ function dco
     $active = [System.Environment]::GetEnvironmentVariable('ActiveOpsEnv' , [System.EnvironmentVariableTarget]::User)
     if ($active -ne "")
     {
-        docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $active $args
+        docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $active $args
     }
     else
     {
-        docker-compose -f docker-compose.yml -f docker-compose.local.yml $args
+        docker-compose -f docker-compose.yml -f docker-compose.walljm.yml $args
     }
     Pop-Location
-}
-
-function dcd
-{
-    push-location $projects\vae\disn\src\packaging;
-    docker-compose -p disn -f docker-compose.yml -f docker-compose.local.dev.yml $args
-    pop-location;
 }
 
 function ops
@@ -151,25 +144,25 @@ function ops
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
         if ($active -ne $null)
         {
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $active down"
-            docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $active down
+            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $active down"
+            docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $active down
         }
         else
         {
             if ($cmd -ne "demo")
             {
-                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p demo down"
-                docker-compose -f docker-compose.yml -f docker-compose.local.yml -p demo down
+                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p demo down"
+                docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p demo down
             }
             if ($cmd -ne "test")
             {
-                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p test down"
-                docker-compose -f docker-compose.yml -f docker-compose.local.yml -p test down
+                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p test down"
+                docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p test down
             }
             if ($cmd -ne "dev")
             {
-                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p dev down"
-                docker-compose -f docker-compose.yml -f docker-compose.local.yml -p dev down
+                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p dev down"
+                docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p dev down
             }
         }
     }
@@ -179,8 +172,8 @@ function ops
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
         Write-Host  " Pulling OPS $cmd..."  -ForegroundColor Yellow
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml pull"
-        docker-compose -f docker-compose.yml -f docker-compose.local.yml pull
+        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml pull"
+        docker-compose -f docker-compose.yml -f docker-compose.walljm.yml pull
     }
 
     $stack = "itpie_$cmd"
@@ -195,8 +188,8 @@ function ops
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
         Write-Host  " Stopping OPS $stack..."  -ForegroundColor Yellow
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack down"
-        docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack down
+        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack down"
+        docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack down
         [System.Environment]::SetEnvironmentVariable('ActiveOpsEnv', "" , [System.EnvironmentVariableTarget]::User)
     }
     else 
@@ -206,23 +199,23 @@ function ops
             Write-Host "---------------------------------------------"  -ForegroundColor Yellow
             Write-Host  " Cleaning OPS $stack..."  -ForegroundColor Yellow
             Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack down -v"
-            docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack down -v
+            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack down -v"
+            docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack down -v
         }
 
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
         Write-Host  " Starting OPS $stack..."  -ForegroundColor Yellow
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack up -d --remove-orphans"
+        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack up -d --remove-orphans"
         [System.Environment]::SetEnvironmentVariable('ActiveOpsEnv', $stack , [System.EnvironmentVariableTarget]::User)
-        docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack up -d --remove-orphans
+        docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack up -d --remove-orphans
 
         if ($h)
         {
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack stop itpie-api"
-            docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack stop itpie-api
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack stop webclient"
-            docker-compose -f docker-compose.yml -f docker-compose.local.yml -p $stack stop webclient
+            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack stop itpie-api"
+            docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack stop itpie-api
+            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack stop webclient"
+            docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack stop webclient
         }
     }	
 

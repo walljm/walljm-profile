@@ -31,6 +31,7 @@ function cmds
     echo "   show interfaces"
     echo "   show interfaces hidden"
     echo "   show ip"
+    echo "   show linux"
     echo ""
     echo " git aliases"
     echo " ---------------------------------------------------------------"
@@ -54,7 +55,6 @@ function cmds
     echo "    cdp == cd $projects"
     echo "   cdpw == cd $projects\walljm"
     echo "     dc == docker-compose $args"
-    echo "    dco == dc -f docker-compose.yml -f docker-compose.local.yml"
     echo "     rn == react-native $args"
     echo "     io == ionic $args"
     echo "    ioc == ionic cordova $args"
@@ -280,13 +280,17 @@ function show
                 Sort-Object InterfaceIndex, State, IPAddress | `
                 Format-Table -Property IPAddress, LinkLayerAddress, InterfaceIndex, InterfaceAlias, State
     }
+    elseif ($cmd -like "lin*")
+    {
+        wsl --list --verbose --all
+    }
 }
 
 function aliases
 {
-	cmds
-	vcmds
-	mcmds
+    cmds
+    vcmds
+    mcmds
 }
 
 set-alias -Name io -Value ionic
