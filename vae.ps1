@@ -71,16 +71,19 @@ function cdpo
 }
 function dco
 {
+    $system, $cmds = $args;
+
+    if (($system -eq $null) -or (!($system -eq "dev") -and ($system -eq "demo") -and ($system -eq "test")))
+    {
+        Write-Host "A valid cmd is required: dev, demo, test"
+        return
+    }
+
     push-location $opsfolder\packaging;
-    $active = [System.Environment]::GetEnvironmentVariable('ActiveOpsEnv' , [System.EnvironmentVariableTarget]::User)
-    if ($active -ne "")
-    {
-        docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $active $args
-    }
-    else
-    {
-        docker-compose -f docker-compose.yml -f docker-compose.walljm.yml $args
-    }
+    
+    $stack = "itpie_$system"
+
+    Invoke-Expression "docker-compose -f docker-compose.yml -f docker-compose.walljm.$system.yml -p $stack $cmds"
     Pop-Location
 }
 
@@ -135,91 +138,63 @@ function ops
     Write-Host  "$projects\vae\ops\packaging"
     cd "$projects\vae\ops\packaging"
     
-    $active = [System.Environment]::GetEnvironmentVariable('ActiveOpsEnv' , [System.EnvironmentVariableTarget]::User)
-
-    if (($cmd -ne $null) -and ($active -ne "itpie_$cmd") -and ($cmd -ne ""))
+    if ($cmd -eq $null)
     {
-        Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  " Stopping OPS..."  -ForegroundColor Yellow
-        Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        if ($active -ne $null)
-        {
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $active down"
-            docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $active down
-        }
-        else
-        {
-            if ($cmd -ne "demo")
-            {
-                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p demo down"
-                docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p demo down
-            }
-            if ($cmd -ne "test")
-            {
-                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p test down"
-                docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p test down
-            }
-            if ($cmd -ne "dev")
-            {
-                Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p dev down"
-                docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p dev down
-            }
-        }
-    }
-
-    if ($p)
-    {
-        Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  " Pulling OPS $cmd..."  -ForegroundColor Yellow
-        Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml pull"
-        docker-compose -f docker-compose.yml -f docker-compose.walljm.yml pull
+        Write-Host "A valid cmd is required: cmd, demo, test"
+        return
     }
 
     $stack = "itpie_$cmd"
-    if (($cmd -eq "") -and ($active -ne ""))
+    $dco = "docker-compose -f docker-compose.yml -f docker-compose.walljm.$cmd.yml -p $stack"
+    
+    if ($p)
     {
-        # if no cmd was given, then you should stop the active ops env
-        $stack = $active
+        writeHeader " Pulling OPS $stack..."
+        invoke "$dco pull"
     }
+
 
     if ($d)
     {
-        Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  " Stopping OPS $stack..."  -ForegroundColor Yellow
-        Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack down"
-        docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack down
-        [System.Environment]::SetEnvironmentVariable('ActiveOpsEnv', "" , [System.EnvironmentVariableTarget]::User)
+        writeHeader " Stopping OPS $stack..."
+        invoke "$dco down"
     }
     else 
     {
         if ($c)
         {
-            Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-            Write-Host  " Cleaning OPS $stack..."  -ForegroundColor Yellow
-            Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack down -v"
-            docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack down -v
+            writeHeader " Cleaning OPS $stack..."
+            invoke "$dco down -v"
         }
 
-        Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  " Starting OPS $stack..."  -ForegroundColor Yellow
-        Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack up -d --remove-orphans"
-        [System.Environment]::SetEnvironmentVariable('ActiveOpsEnv', $stack , [System.EnvironmentVariableTarget]::User)
-        docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack up -d --remove-orphans
+        writeHeader " Starting OPS $stack..."
+        invoke "$dco up -d --remove-orphans"
 
         if ($h)
         {
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack stop itpie-api"
-            docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack stop itpie-api
-            Write-Host  "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack stop webclient"
-            docker-compose -f docker-compose.yml -f docker-compose.walljm.yml -p $stack stop webclient
+            invoke "$dco stop itpie-api"
+            invoke "$dco stop webclient"
         }
     }	
 
     pop-location;
+}
+
+function invoke
+{
+    param(
+        [String]
+        [Parameter(Mandatory = $true, Position = 0)]
+        $cmd)
+    Write-Host $cmd
+    Invoke-Expression $cmd
+}
+
+function writeHeader
+{
+    Write-Host "---------------------------------------------"  -ForegroundColor Yellow
+    Write-Host  " $args..."  -ForegroundColor Yellow
+    Write-Host "---------------------------------------------"  -ForegroundColor Yellow
 }
 
 function vpn
@@ -245,7 +220,7 @@ function vpn
 
     if ($cmd -eq "start")
     {
-        ssh -t root@vpnproxy.lan "openconnect vpn.vaeit.com --user='jason.wall'"
+        ssh -t root@vpnproxy.home "openconnect vpn.vaeit.com --user='jason.wall'"
         return
     }
 
@@ -350,24 +325,49 @@ function nf
 {
     param(
         [String]
-        [Parameter(Mandatory = $true, Position = 0,
-            HelpMessage = "The name of a network: one, five, large, etc...")]
+        [Parameter(Mandatory = $false, Position = 0,
+            HelpMessage = "The name of a network: one, five, large or a cmd: enable, disable")]
         $cmd,
         [String]
         [Parameter(Mandatory = $false, Position = 1,
             HelpMessage = "Logging level: 0==none, 1=basic, 2=verbose, 3=extra verbose")]
-        $loglevel)
-    if ($cmd -ne $null)
+        $loglevel,
+        [Parameter(Mandatory = $false,
+            HelpMessage = "The interface index")]
+        [Alias("i")]
+        [AllowNull()]
+        [Int32]
+        $ifIndex)
+
+    if ($cmd -eq "enable")
+    {
+        new-netroute -destinationprefix 100.64.0.0/12 -nexthop 192.168.20.10 -interfaceindex $ifIndex -Confirm:$false
+        show route
+        return
+    }
+
+    if ($cmd -eq "disable")
+    {
+        remove-netroute -destinationprefix 100.64.0.0/12 -Confirm:$false
+        show route
+        return
+    }
+
+    echo $cmd
+    echo $ifIndex
+    if (($cmd -ne $null) -and ($ifIndex -eq 0))
     {
         ssh -t itpie@faker.dev "/bin/bash /home/itpie/fake.sh $($cmd) $($loglevel)"
         return
     }
 
+
     Write-Host  ""
-    Write-Host  "Syntax: nf cmd"
+    Write-Host  "Syntax: nf cmd loglevel -i"
     Write-Host  ""
-    Write-Host  " cmd         - name of one of the fake networks: small, med, large, xlarge, etc..."
-    Write-Host  " loglevel    - logging level: 0==none, 1=basic, 2=verbose, 3=extra verbose"
+    Write-Host  " cmd          - name of one of the fake networks: small, med, large or a cmd: enable, disable"
+    Write-Host  " loglevel     - OPTIONAL: logging level: 0==none, 1=basic, 2=verbose, 3=extra verbose"
+    Write-Host  " -i|--ifIndex - OPTIONAL: required if using the enable command.  the interface index used by the network faker"
 
     return
 
