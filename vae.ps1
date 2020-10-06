@@ -310,13 +310,15 @@ function gitPull
 {
     $folder = $args;
     Write-Host  "";
-    get-childitem $folder -directory | where-object { $_.Name -Match "^\w" } | foreach-object { 
-        cd "$folder\$($_.Name)";
+    get-childitem $folder -directory | where-object { $_.Name -Match "^\w" } | foreach-object {
+        
+        push-location "$folder\$($_.Name)";
         Write-Host "---------------------------------------------"  -ForegroundColor Yellow
         Write-Host " $($_.Name)" -ForegroundColor Yellow
         Write-Host "---------------------------------------------" -ForegroundColor Yellow
         git pull;
         Write-Host  "";
+        Pop-Location
     }
     return
 }
