@@ -1,6 +1,7 @@
-$opsfolder = "$projects\vae\ops"
+$opsfolder = "$projects\vae\operations"
 $miscfolder = "$projects\vae\misc"
-$engfolder = "$projects\vae\eng"
+$engfolder = "$projects\vae\engineering"
+$dockercompose = "docker-compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.walljm.yml -p itpie "
 
 function vcmds
 { 
@@ -15,16 +16,6 @@ function vcmds
 function cdpo
 {
     param (
-        [Parameter(Mandatory = $false,
-            HelpMessage = "If used, dumps you into the demo packing folder")]
-        [Alias("demo")]
-        [Switch]
-        $d,
-        [Parameter(Mandatory = $false,
-            HelpMessage = "If used, dumps you into the test packing folder")]
-        [Alias("test")]
-        [Switch]
-        $t,
         [Parameter(Mandatory = $false)]
         [ArgumentCompleter( {
                 param ( $commandName,
@@ -65,36 +56,24 @@ function cdpo
     }
     else
     {
-        Write-Host  "cd $opsfolder\packaging"
-        cd  $opsfolder\packaging
+        Write-Host  "cd $opsfolder"
+        cd  $opsfolder
     }
 }
 function dco
 {
-    $system, $cmds = $args;
+    $cmds = $args;
 
-    if (($system -eq $null) -or (!($system -eq "dev") -and ($system -eq "demo") -and ($system -eq "test")))
-    {
-        Write-Host "A valid cmd is required: dev, demo, test"
-        return
-    }
-
-    push-location $opsfolder\packaging;
+    push-location $opsfolder;
     
-    $stack = "itpie_$system"
+    Invoke-Expression "$dockercompose $cmds"
 
-    Invoke-Expression "docker-compose -f docker-compose.yml -f docker-compose.walljm.$system.yml -p $stack $cmds"
     Pop-Location
 }
 
 function ops
 {
     param(
-        [Parameter(Mandatory = $false,
-            HelpMessage = "If used, does a 'pull' before bring the system up.")]
-        [Alias("pull")]
-        [Switch]
-        $p,
         [Parameter(Mandatory = $false,
             HelpMessage = "If used, does a 'down -v' before bring the system up.")]
         [Alias("clean")]
@@ -113,7 +92,7 @@ function ops
         [String]
         [Parameter(Mandatory = $false, Position = 0,
             HelpMessage = "Enter one of the following: test, demo, dev, git")]
-        [ValidateSet("test", "demo", "dev", "git", "help", "")]
+        [ValidateSet("git", "help", "")]
         $cmd)
 
     push-location;
@@ -122,58 +101,47 @@ function ops
     if ($cmd -eq "help")
     {
         Write-Host  ""
-        Write-Host  "Syntax: ops dev|test|demo|help -p|pull -c|clean -h|headless -d|down -gp|gitpull"
+        Write-Host  "Syntax: ops -p|pull -c|clean -h|headless -d|down -gp|gitpull"
         Write-Host  ""
-        Write-Host  " cmd         - one of the following: 'test', 'demo', 'dev', 'help', ''"
-        Write-Host  " -p|pull      - If used, does a 'pull' before bring the system up."
+        Write-Host  " cmd          - one of the following: 'help', ''"
         Write-Host  " -c|clean     - If used, does a 'down -v' before bring the system up."
         Write-Host  " -h|headless  - If used, stops the webclient and itpie-api containers, so you can run them from source."
-        Write-Host  " -d|down      - If used, stops all services using docker-compose down"
+        Write-Host  " -d|down      - If used, stops all services using $dockercompose down"
 		
         pop-location;
         return
     }
     
     
-    Write-Host  "$projects\vae\ops\packaging"
-    cd "$projects\vae\ops\packaging"
+    Write-Host  "$opsfolder"
+    cd "$opsfolder"
     
     if ($cmd -eq $null)
     {
         Write-Host "A valid cmd is required: cmd, demo, test"
         return
     }
-
-    $stack = "itpie_$cmd"
-    $dco = "docker-compose -f docker-compose.yml -f docker-compose.walljm.$cmd.yml -p $stack"
     
-    if ($p)
-    {
-        writeHeader " Pulling OPS $stack..."
-        invoke "$dco pull"
-    }
-
-
     if ($d)
     {
-        writeHeader " Stopping OPS $stack..."
-        invoke "$dco down"
+        writeHeader " Stopping OPS..."
+        invoke "$dockercompose down"
     }
     else 
     {
         if ($c)
         {
-            writeHeader " Cleaning OPS $stack..."
-            invoke "$dco down -v"
+            writeHeader " Cleaning OPS..."
+            invoke "$dockercompose down -v"
         }
 
-        writeHeader " Starting OPS $stack..."
-        invoke "$dco up -d --remove-orphans"
+        writeHeader " Starting OPS..."
+        invoke "$dockercompose up -d --remove-orphans"
 
         if ($h)
         {
-            invoke "$dco stop itpie-api"
-            invoke "$dco stop webclient"
+            invoke "$dockercompose stop itpie-api"
+            invoke "$dockercompose stop webclient"
         }
     }	
 

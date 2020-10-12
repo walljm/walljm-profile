@@ -1,6 +1,6 @@
 
 $projects = "c:\projects"
-
+$dockerfiles = "$projects\walljm\winprofile\docker_files"
 
 function prompt
 {
@@ -12,15 +12,6 @@ function prompt
     $LASTEXITCODE = $origLastExitCode
     "$('>' * ($nestedPromptLevel + 1)) "
 }
-
-# function sudo {
-# param (
-# [ScriptBlock]
-# $code
-# ) 
-# # Elevate our permissions for this first.
-# Start-Process "pwsh.exe" -ArgumentList "-Command $code" -WindowStyle hidded -Verb RunAs -RedirectStandardError &2 -RedirectStandardOutput &1 
-# }
 
 function cmds
 {
@@ -167,6 +158,54 @@ function cdpw
         cd  $projects\walljm
     }
 }
+
+function cdpd
+{
+    param (
+        [Parameter(Mandatory = $false)]
+        [ArgumentCompleter( {
+                param ( $commandName,
+                    $parameterName,
+                    $wordToComplete,
+                    $commandAst,
+                    $fakeBoundParameters )
+            
+                $dir = "$dockerfiles\$wordToComplete"			
+                if ($wordToComplete -eq "")
+                {
+                    $dir = "$projects\a"
+                }
+                if ($wordToComplete.EndsWith("\"))
+                {
+                    $dir = $dir + "a"
+                }
+                $examine = split-path -path $dir
+                $pre = $examine.Substring($projects.length)
+                if ($pre.length -gt 0)
+                {
+                    $pre = "$pre\"
+                }
+                if ($pre.StartsWith("\"))
+                {
+                    $pre = $pre.Substring(1)
+                }
+                $test = $wordToComplete.split('\') | Select-Object -last 1
+                Get-ChildItem $examine | Where-Object { $_.PSIsContainer } | Select-Object Name | Where-Object { $_ -like "*$test*" } | ForEach-Object { "$($pre)$($_.Name)\" }
+
+            } )]
+        $args
+    )
+    if ($args)
+    {
+        echo "cd  $projects\walljm\$args"
+        cd $dockerfiles\$args
+    }
+    else
+    {
+        echo "cd  $dockerfiles"
+        cd  $dockerfiles
+    }
+}
 function dc
 {
     echo "docker-compose $($args -join ' ')"
@@ -296,7 +335,10 @@ function aliases
 set-alias -Name io -Value ionic
 set-alias -Name rn -Value react-native
 
+$env:HOME = $env:USERPROFILE
+
 cmds
+
 #source the work specific profiles
 . C:\Projects\walljm\winprofile\vae.ps1
 . C:\Projects\walljm\winprofile\migo.ps1
