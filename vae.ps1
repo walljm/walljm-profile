@@ -1,7 +1,7 @@
 $opsfolder = "$projects\vae\operations"
 $miscfolder = "$projects\vae\misc"
 $engfolder = "$projects\vae\engineering"
-$dockercompose = "docker-compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.walljm.yml -p itpie "
+$dockercompose = "docker-compose "
 
 function vcmds
 { 
@@ -115,13 +115,7 @@ function ops
     
     Write-Host  "$opsfolder"
     cd "$opsfolder"
-    
-    if ($cmd -eq $null)
-    {
-        Write-Host "A valid cmd is required: cmd, demo, test"
-        return
-    }
-    
+        
     if ($d)
     {
         writeHeader " Stopping OPS..."
@@ -136,7 +130,7 @@ function ops
         }
 
         writeHeader " Starting OPS..."
-        invoke "$dockercompose up -d --remove-orphans"
+        invoke "$dockercompose up -d --build --remove-orphans"
 
         if ($h)
         {
@@ -256,8 +250,11 @@ function dev
 
         if (($action -eq 'gitpull') -or ($action -eq 'gp'))
         {
+            gitPullFolder "$projects\walljm";
+            
+            gitPullFolder $miscfolder;
+
             gitPull $opsfolder;
-            gitPull $miscfolder;
             gitPull $engfolder;
 
             return
@@ -274,22 +271,31 @@ function dev
 
 }
 
-function gitPull
+function gitPullFolder
 {
     $folder = $args;
     Write-Host  "";
     get-childitem $folder -directory | where-object { $_.Name -Match "^\w" } | foreach-object {
-        
-        push-location "$folder\$($_.Name)";
-        Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-        Write-Host " $($_.Name)" -ForegroundColor Yellow
-        Write-Host "---------------------------------------------" -ForegroundColor Yellow
-        git pull;
-        Write-Host  "";
-        Pop-Location
+        gitPull "$folder\$($_.Name)";
     }
     return
 }
+
+function gitPull
+{
+    $folder = $args;
+    $name = (getDirName "$folder\");
+
+    push-location "$folder";
+    Write-Host "---------------------------------------------"  -ForegroundColor Yellow
+    Write-Host "$name" -ForegroundColor Yellow
+    Write-Host "---------------------------------------------" -ForegroundColor Yellow
+    git pull;
+    Write-Host  "";
+    Pop-Location
+}
+
+
 
 function nf
 {
@@ -342,5 +348,10 @@ function nf
     return
 
 }
+
+#[System.Environment]::SetEnvironmentVariable('LICENSE_PATH', (Join-Path $ENV:USERPROFILE '.itpie/conf/itpie.lic'), 'User')
+#[System.Environment]::SetEnvironmentVariable('ASPNETCORE_ENVIRONMENT', 'Development', 'User')
+#[System.Environment]::SetEnvironmentVariable('NEXTGEN_ENCRYPTION_KEY', 'ErbDoZ+8v/jKRFgrgZcqycU31awVnWR4C/2pIvwl/TQ=', 'User')
+#[System.Environment]::SetEnvironmentVariable('NEXTGEN_ENCRYPTION_IV', 'gZ2zXALeWPLqo1Vw1ElT5w==', 'User')
 
 vcmds

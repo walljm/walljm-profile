@@ -325,6 +325,15 @@ function show
     }
 }
 
+####
+# Helper Functions
+####
+
+function getDirName
+{
+    [System.IO.Path]::GetFileName([System.IO.Path]::GetDirectoryName($args))
+}
+
 function aliases
 {
     cmds
@@ -335,7 +344,7 @@ function aliases
 set-alias -Name io -Value ionic
 set-alias -Name rn -Value react-native
 
-$env:HOME = $env:USERPROFILE
+[System.Environment]::SetEnvironmentVariable('HOME', $ENV:USERPROFILE, 'User')
 
 cmds
 
