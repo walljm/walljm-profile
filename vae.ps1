@@ -1,7 +1,7 @@
 $opsfolder = "$projects\vae\operations"
 $miscfolder = "$projects\vae\misc"
 $engfolder = "$projects\vae\engineering"
-$dockercompose = "docker-compose "
+$dockercompose = "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml"
 
 function vcmds
 { 
@@ -9,7 +9,10 @@ function vcmds
     Write-Host  "    dco == dc -f docker-compose.yml -f docker-compose.walljm.yml"
     Write-Host  "    ops == demo|test|dev|help -c|clean -p|pull -h|headless -d|down -gp|gitpull"
     Write-Host  "    vpn == vpn enable|disable|start -i|ifIndex -v|vpn"
-    Write-Host  "    dev == dev dbd|dbdate $args"
+    Write-Host  "    dev == dev dbd|dbdate|gp|gitpull $args"
+    Write-Host  ""
+    Write-Host  "  ignoreDockerCompose | ignores the docker-compose file so you can make changes without running into issues"
+    write-host  "            setVaeEnv | sets the vae environment variabls for the user"
     Write-Host  ""
 }
 
@@ -101,7 +104,7 @@ function ops
     if ($cmd -eq "help")
     {
         Write-Host  ""
-        Write-Host  "Syntax: ops -p|pull -c|clean -h|headless -d|down -gp|gitpull"
+        Write-Host  "Syntax: ops -c|clean -h|headless -d|down -gp|gitpull"
         Write-Host  ""
         Write-Host  " cmd          - one of the following: 'help', ''"
         Write-Host  " -c|clean     - If used, does a 'down -v' before bring the system up."
@@ -251,7 +254,7 @@ function dev
         if (($action -eq 'gitpull') -or ($action -eq 'gp'))
         {
             gitPullFolder "$projects\walljm";
-            
+
             gitPullFolder $miscfolder;
 
             gitPull $opsfolder;
@@ -349,9 +352,19 @@ function nf
 
 }
 
-#[System.Environment]::SetEnvironmentVariable('LICENSE_PATH', (Join-Path $ENV:USERPROFILE '.itpie/conf/itpie.lic'), 'User')
-#[System.Environment]::SetEnvironmentVariable('ASPNETCORE_ENVIRONMENT', 'Development', 'User')
-#[System.Environment]::SetEnvironmentVariable('NEXTGEN_ENCRYPTION_KEY', 'ErbDoZ+8v/jKRFgrgZcqycU31awVnWR4C/2pIvwl/TQ=', 'User')
-#[System.Environment]::SetEnvironmentVariable('NEXTGEN_ENCRYPTION_IV', 'gZ2zXALeWPLqo1Vw1ElT5w==', 'User')
+function ignoreDockerCompose
+{
+    push-location "$opsfolder";
+    git update-index --assume-unchanged .\docker-compose.override.yml
+    Pop-Location
+}
+
+function setVaeEnv
+{
+    [System.Environment]::SetEnvironmentVariable('ITPIE_LICENSE__KEY', 'aMORtqjHzyOFQIHeGPQ8e0nT1%2BeZYanKKtZEpDF2CJ3mvQYCGYwGMIsxbvqpBLlOWRnhhO8gW1G8djUtDSLx4A%3D%3D', 'User')
+    [System.Environment]::SetEnvironmentVariable('ASPNETCORE_ENVIRONMENT', 'Development', 'User')
+    [System.Environment]::SetEnvironmentVariable('NEXTGEN_ENCRYPTION_KEY', 'ErbDoZ+8v/jKRFgrgZcqycU31awVnWR4C/2pIvwl/TQ=', 'User')
+    [System.Environment]::SetEnvironmentVariable('NEXTGEN_ENCRYPTION_IV', 'gZ2zXALeWPLqo1Vw1ElT5w==', 'User')
+}
 
 vcmds

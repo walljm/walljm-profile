@@ -149,8 +149,8 @@ function cdpw
     )
     if ($args)
     {
-        echo "cd  $projects\walljm\$args"
-        cd $projects\walljm\$args
+        echo "cd  $projects\$args"
+        cd $projects\$args
     }
     else
     {

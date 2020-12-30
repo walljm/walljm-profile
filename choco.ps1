@@ -7,9 +7,9 @@ choco upgrade powershell-core -y
 choco upgrade openssh -y
 choco upgrade nodejs -y
 choco upgrade mkcert -y
-choco install gnuplot -y
-choco install jq -y
-choco install golang -y
+choco upgrade gnuplot -y
+choco upgrade jq -y
+choco upgrade golang -y
 
 Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
 Import-Module 'C:\Program Files\Microsoft Virtual Machine Converter\MvmcCmdlet.psd1'
