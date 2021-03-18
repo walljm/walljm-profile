@@ -1,4 +1,4 @@
-version: "2"
+version: "3"
 
 services:
   portainer:
@@ -22,6 +22,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-
+  
 volumes:
   portainer_data:

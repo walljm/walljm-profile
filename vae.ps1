@@ -185,6 +185,7 @@ function vpn
 
     if ($cmd -eq "start")
     {
+        $host.ui.RawUI.WindowTitle = "vpn.vaeit.com: jason.wall"
         ssh -t root@vpnproxy.home "openconnect vpn.vaeit.com --user='jason.wall'"
         return
     }
@@ -306,21 +307,17 @@ function nf
         [String]
         [Parameter(Mandatory = $false, Position = 0,
             HelpMessage = "The name of a network: one, five, large or a cmd: enable, disable")]
-        $cmd,
-        [String]
-        [Parameter(Mandatory = $false, Position = 1,
-            HelpMessage = "Logging level: 0==none, 1=basic, 2=verbose, 3=extra verbose")]
-        $loglevel,
-        [Parameter(Mandatory = $false,
-            HelpMessage = "The interface index")]
-        [Alias("i")]
-        [AllowNull()]
-        [Int32]
-        $ifIndex)
+        $cmd)
 
     if ($cmd -eq "enable")
     {
-        new-netroute -destinationprefix 100.64.0.0/12 -nexthop 192.168.20.10 -interfaceindex $ifIndex -Confirm:$false
+        $ip = wsl -u root -- hostname -I
+        $ifIndex = Get-NetIPAddress -IncludeAllCompartments | `
+            Where-Object InterfaceAlias -eq 'vEthernet (WSL)' | `
+            Where-Object AddressFamily -eq 'IPv4' | `
+            Select-Object -ExpandProperty InterfaceIndex
+        New-NetRoute -DestinationPrefix 100.64.0.0/12 -NextHop "${$ip}" -InterfaceIndex $ifIndex -Confirm:$false
+        wsl -u root -- ip addr add 100.64.0.0/10 dev lo
         show route
         return
     }
@@ -332,21 +329,18 @@ function nf
         return
     }
 
-    echo $cmd
-    echo $ifIndex
-    if (($cmd -ne $null) -and ($ifIndex -eq 0))
+    if ($cmd -ne $null)
     {
-        ssh -t itpie@faker.dev "/bin/bash /home/itpie/fake.sh $($cmd) $($loglevel)"
+        $host.ui.RawUI.WindowTitle = "network faker: $cmd"
+        wsl -u root -- ./fake $cmd
         return
     }
 
 
     Write-Host  ""
-    Write-Host  "Syntax: nf cmd loglevel -i"
+    Write-Host  "Syntax: nf cmd"
     Write-Host  ""
-    Write-Host  " cmd          - name of one of the fake networks: small, med, large or a cmd: enable, disable"
-    Write-Host  " loglevel     - OPTIONAL: logging level: 0==none, 1=basic, 2=verbose, 3=extra verbose"
-    Write-Host  " -i|--ifIndex - OPTIONAL: required if using the enable command.  the interface index used by the network faker"
+    Write-Host  " cmd          - name of one of the fake networks installed in C:\Projects\fake_networks, or enable,disable to setup the route or remove it"
 
     return
 

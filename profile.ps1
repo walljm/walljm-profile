@@ -260,9 +260,15 @@ function gt
 function show
 {
     $cmd, $other = $args
-    if ($cmd -like "int*")
+    if ($cmd -like "ifc*")
     {
-        if ($other -like "hid*")
+        if ($other -like "lst"){
+            Get-NetAdapter -IncludeHidden | `
+            Sort-Object Hidden, InterfaceIndex | `
+            Format-List -Property  InterfaceIndex, Name, InterfaceDescription, InterfaceName, MacAddress, `
+            AdminStatus, ifOperStatus, LinkSpeed, ReceiveLinkSpeed, TransmitLinkSpeed, FullDuplex, MediaType, Virtual
+        }
+        elseif ($other -like "hid*")
         {
             Get-NetAdapter -IncludeHidden | `
                     Sort-Object Hidden, InterfaceIndex | `
@@ -275,8 +281,8 @@ function show
             Get-NetAdapter | `
                     Sort-Object Hidden, InterfaceIndex | `
                     Format-Table -Property InterfaceIndex, InterfaceName, Name, InterfaceDescription, MacAddress, `
-                    PermanentAddress, AdminStatus, ifOperStatus, LinkSpeed, FullDuplex, MediaType, Virtual, `
-                    DeviceWakeUpEnable, Hidden, VlanID
+                    AdminStatus, ifOperStatus, LinkSpeed, FullDuplex, MediaType, Virtual, `
+                    DeviceWakeUpEnable
         }
     }
     elseif ($cmd -like "route*")
@@ -325,6 +331,37 @@ function show
     }
 }
 
+
+# backup files from a docker volume into /tmp/backup.tar.gz
+function dockerVolumeBackupCompressed()
+{
+    docker run --rm -v /tmp:/backup --volumes-from "$1" debian:jessie tar -czvf /backup/backup.tar.gz "${@:2}"
+}
+
+# restore files from /tmp/backup.tar.gz into a docker volume
+function dockerVolumeRestoreCompressed()
+{
+    docker run --rm -v /tmp:/backup --volumes-from "$1" debian:jessie tar -xzvf /backup/backup.tar.gz "${@:2}"
+    echo "Double checking files..."
+    docker run --rm -v /tmp:/backup --volumes-from "$1" debian:jessie ls -lh "${@:2}"
+}
+
+# backup files from a docker volume into /tmp/backup.tar
+function dockerVolumeBackup()
+{
+    docker run --rm -v /tmp:/backup --volumes-from "$1" busybox tar -cvf /backup/backup.tar "${@:2}"
+}
+
+# restore files from /tmp/backup.tar into a docker volume
+function dockerVolumeRestore()
+{
+    docker run --rm -v /tmp:/backup --volumes-from "$1" busybox tar -xvf /backup/backup.tar "${@:2}"
+    echo "Double checking files..."
+    docker run --rm -v /tmp:/backup --volumes-from "$1" busybox ls -lh "${@:2}"
+}
+
+
+
 ####
 # Helper Functions
 ####
@@ -343,6 +380,13 @@ function aliases
 
 set-alias -Name io -Value ionic
 set-alias -Name rn -Value react-native
+
+function vcode
+{
+    $project = (Get-ChildItem -Path $args -Name -Include *.csproj);
+    devenv.exe $project
+    
+}
 
 [System.Environment]::SetEnvironmentVariable('HOME', $ENV:USERPROFILE, 'User')
 

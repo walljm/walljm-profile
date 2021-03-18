@@ -1,36 +1,35 @@
 {
-    "Logging": {
-        "LogLevel": {
-            "Default": "Warning"
-        }
-    },
-    "Authentication": {
-        "Google": {
-            "ClientId": "355040817585-51kugla7c6vr02kbe0q0j1b80iv1hcnq.apps.googleusercontent.com",
-            "ClientSecret": "SJlThGSlmlAnEttwiQ5quAMR",
-            "CallBackPath": "/google-oauth"
-        }
-    },
-    "IdentityServer": {
-        "Key": {
-            "FilePath": "./conf/localhost.pfx",
-            "Password": "sda8923g234kl5bjdsf094wy9sfph",
-            "Type": "File"
-        }
-    },
-    "Kestrel": {
-        "Endpoints": {
-            "HTTPS": {
-                "Url": "https://*:443",
-                "Certificate": {
-                    "Path": "./conf/localhost.pfx",
-                    "Password": "sda8923g234kl5bjdsf094wy9sfph"
-                }
-            }
-        }
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning"
     }
-    //,
-    //"Proxy": {
-    //    "EnsureHttpsScheme": true
-    //}
+  },
+  "Authentication": {
+    "Google": {
+      "ClientId": "355040817585-51kugla7c6vr02kbe0q0j1b80iv1hcnq.apps.googleusercontent.com",
+      "ClientSecret": "SJlThGSlmlAnEttwiQ5quAMR",
+      "CallBackPath": "/google-oauth"
+    }
+  },
+  "IdentityServer": {
+    "Key": {
+      "FilePath": "./conf/localhost.pfx",
+      "Password": "sda8923g234kl5bjdsf094wy9sfph",
+      "Type": "File"
+    }
+  },
+  "Kestrel": {
+    "Endpoints": {
+      "HTTPS": {
+        "Url": "https://*:443",
+        "Certificate": {
+          "Path": "./conf/localhost.pfx",
+          "Password": "sda8923g234kl5bjdsf094wy9sfph"
+        }
+      }
+    }
+  },
+  "JiraSettings": {
+    "JiraToken": "amFzb24ud2FsbEB2YWVpdC5jb206UDlKcW40M2FOeTBwN0dRanBSRFFCODVD"
+  }
 }
