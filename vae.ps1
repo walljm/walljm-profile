@@ -173,9 +173,10 @@ function vpn
         [Parameter(Mandatory = $false,
             HelpMessage = "The interface index")]
         [Alias("i")]
+        [ValidateSet("wifi", "dock")]
         [AllowNull()]
-        [Int32]
-        $ifIndex,
+        [String]
+        $ifc,
         [Parameter(Mandatory = $false,
             HelpMessage = "The ip address of the vpn proxy")]
         [Alias("v")]
@@ -190,11 +191,6 @@ function vpn
         return
     }
 
-    if ($PSBoundParameters.ContainsKey('ifIndex') -eq $false)
-    {
-        # set a default value.
-        $ifIndex = 22
-    }
     
     if ($PSBoundParameters.ContainsKey('vpn') -eq $false)
     {
@@ -202,29 +198,47 @@ function vpn
         $vpn = "192.168.1.54"
     }
 
+    if ($PSBoundParameters.ContainsKey('ifc') -eq $false)
+    {
+        # set a default value.
+        $ifcName = "EthernetDock"
+    }
+    elseif ($ifc -eq 'dock')
+    {
+        $ifcName = "EthernetDock"
+    }
+    elseif ($ifc -eq 'wifi')
+    {
+        $ifcName = "vEthernet (WIFI)"
+    }
+
     if ($cmd -eq "enable")
     {
-        
+
+        $ifIndex = Get-NetIPAddress -IncludeAllCompartments | `
+                Where-Object InterfaceAlias -eq $ifcName | `
+                Where-Object AddressFamily -eq 'IPv4' | `
+                Select-Object -ExpandProperty InterfaceIndex
 
         Set-DnsClientServerAddress -InterfaceIndex $ifIndex -ServerAddresses ($vpn)
 
-        new-netroute -destinationprefix 10.0.0.0/8 -nexthop $vpn -interfaceindex $ifIndex -Confirm:$false
-        new-netroute -destinationprefix 172.16.0.0/12 -nexthop $vpn -interfaceindex $ifIndex -Confirm:$false
+        New-NetRoute -DestinationPrefix 10.0.0.0/8 -nexthop $vpn -InterfaceIndex $ifIndex -Confirm:$false
+        New-NetRoute -DestinationPrefix 172.16.0.0/12 -nexthop $vpn -InterfaceIndex $ifIndex -Confirm:$false
         return
     }
     elseif ($cmd -eq "disable")
     {
-        remove-netroute -destinationprefix 10.0.0.0/8 -Confirm:$false
-        remove-netroute -destinationprefix 172.16.0.0/12 -Confirm:$false
+        Remove-NetRoute -DestinationPrefix 10.0.0.0/8 -Confirm:$false
+        Remove-NetRoute -DestinationPrefix 172.16.0.0/12 -Confirm:$false
         Set-DnsClientServerAddress -InterfaceIndex $ifIndex -ServerAddresses("192.168.1.1")
         return
     }
 
     Write-Host  ""
-    Write-Host  "Syntax: vpn cmd -i|ifIndex -v|vpn"
+    Write-Host  "Syntax: vpn cmd -i|ifc -v|vpn"
     Write-Host  ""
     Write-Host  " cmd         - one of the following: 'enable', 'disable', 'help'"
-    Write-Host  " -i|ifIndex  - The index of the interface to route through the vpn"
+    Write-Host  " -i|ifc      - one of the following: 'dock', 'wifi' defaults to 'dock'"
     Write-Host  " -v|vpn      - The ip address of the vpn proxy"
 		
     pop-location;
@@ -313,9 +327,9 @@ function nf
     {
         $ip = wsl -u root -- hostname -I
         $ifIndex = Get-NetIPAddress -IncludeAllCompartments | `
-            Where-Object InterfaceAlias -eq 'vEthernet (WSL)' | `
-            Where-Object AddressFamily -eq 'IPv4' | `
-            Select-Object -ExpandProperty InterfaceIndex
+                Where-Object InterfaceAlias -eq 'vEthernet (WSL)' | `
+                Where-Object AddressFamily -eq 'IPv4' | `
+                Select-Object -ExpandProperty InterfaceIndex
         New-NetRoute -DestinationPrefix 100.64.0.0/12 -NextHop "${$ip}" -InterfaceIndex $ifIndex -Confirm:$false
         wsl -u root -- ip addr add 100.64.0.0/10 dev lo
         show route

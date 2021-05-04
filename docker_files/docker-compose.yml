@@ -3,14 +3,14 @@ version: "3"
 services:
   portainer:
     image: portainer/portainer-ce:alpine
-    restart: always
+    restart: unless-stopped
     command: -H unix:///var/run/docker.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
   jiraroadmap:
     image: registry.gitlab.com/vaeit/jiraroadmap:latest
-    restart: always
+    restart: unless-stopped
     volumes:
       - ./roadmapconf:/app/conf
   nginx:
@@ -22,6 +22,14 @@ services:
     ports:
       - "80:80"
       - "443:443"
-  
+  watcher:
+    image: containrrr/watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_INCLUDE_RESTARTING: "true"
+      WATCHTOWER_INCLUDE_STOPPED: "true"
 volumes:
   portainer_data:

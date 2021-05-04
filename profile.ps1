@@ -260,13 +260,15 @@ function gt
 function show
 {
     $cmd, $other = $args
+
     if ($cmd -like "ifc*")
     {
-        if ($other -like "lst"){
+        if ($other -like "lst")
+        {
             Get-NetAdapter -IncludeHidden | `
-            Sort-Object Hidden, InterfaceIndex | `
-            Format-List -Property  InterfaceIndex, Name, InterfaceDescription, InterfaceName, MacAddress, `
-            AdminStatus, ifOperStatus, LinkSpeed, ReceiveLinkSpeed, TransmitLinkSpeed, FullDuplex, MediaType, Virtual
+                    Sort-Object Hidden, InterfaceIndex | `
+                    Format-List -Property  InterfaceIndex, Name, InterfaceDescription, InterfaceName, MacAddress, `
+                    AdminStatus, ifOperStatus, LinkSpeed, ReceiveLinkSpeed, TransmitLinkSpeed, FullDuplex, MediaType, Virtual
         }
         elseif ($other -like "hid*")
         {
@@ -275,6 +277,86 @@ function show
                     Format-Table -Property InterfaceIndex, InterfaceName, Name, InterfaceDescription, MacAddress, `
                     PermanentAddress, AdminStatus, ifOperStatus, LinkSpeed, FullDuplex, MediaType, Virtual, `
                     DeviceWakeUpEnable, Hidden, VlanID
+        }
+        elseif ($other -like "d*")
+        {
+            Get-NetIPConfiguration -Detailed -All -AllCompartments `
+            | ForEach-Object {
+                $dns = Get-DnsClientServerAddress -AddressFamily IPv4 -InterfaceAlias $_.InterfaceAlias -CimSession $_.ComputerName -erroraction 'silentlycontinue'
+                $dnsv6 = Get-DnsClientServerAddress -AddressFamily IPv6 -InterfaceAlias $_.InterfaceAlias -CimSession $_.ComputerName -erroraction 'silentlycontinue'
+                $ip = Get-NetIPAddress -InterfaceAlias $_.InterfaceAlias -AddressFamily IPv4 -PolicyStore ActiveStore -CimSession $_.ComputerName -erroraction 'silentlycontinue'
+                $ifc = Get-NetIPInterface -InterfaceAlias $_.InterfaceAlias -AddressFamily IPv4 -PolicyStore ActiveStore -CimSession $_.ComputerName -erroraction 'silentlycontinue'
+                $gateway = Get-NetRoute -erroraction 'silentlycontinue' -DestinationPrefix '0.0.0.0/0' -InterfaceIndex $_.InterfaceIndex -PolicyStore ActiveStore -CimSession $_.ComputerName | Select-Object NextHop
+                $adapter = Get-NetAdapter -Name $_.InterfaceAlias -CimSession $_.ComputerName -erroraction 'silentlycontinue'
+                $profile = Get-NetConnectionProfile -InterfaceAlias  $_.InterfaceAlias -CimSession $_.ComputerName -erroraction 'silentlycontinue'
+
+                $obj = [PSCustomObject]@{
+                    InterfaceAlias       = $_.InterfaceAlias
+                    InterfaceDescription = $_.InterfaceDescription
+                    InterfaceIndex       = $_.InterfaceIndex
+                    DHCP                 = $ifc.DHCP
+                    Virtual              = $adapter.Virtual
+                }
+
+                if ($adapter.LinkLayerAddress -ne $null)
+                {
+                    $obj | Add-Member -NotePropertyName MAC -NotePropertyValue $adapter.LinkLayerAddress
+                }
+                if ($adapter.AdminStatus -ne $null)
+                {
+                    $obj | Add-Member -NotePropertyName AdminStatus -NotePropertyValue $adapter.AdminStatus
+                }
+                if ($adapter.ifOperStatus -ne $null)
+                {
+                    $obj | Add-Member -NotePropertyName OperStatus -NotePropertyValue $adapter.ifOperStatus
+                }
+                if ($adapter.LinkSpeed -ne $null)
+                {
+                    $obj | Add-Member -NotePropertyName Speed -NotePropertyValue $adapter.LinkSpeed
+                }
+                if ($adapter.FullDuplex -ne $null)
+                {
+                    $obj | Add-Member -NotePropertyName FullDuplex -NotePropertyValue $adapter.FullDuplex
+                }
+                if ($adapter.MediaType -ne $null)
+                {
+                    $obj | Add-Member -NotePropertyName MediaType -NotePropertyValue $adapter.MediaType
+                }
+                if ($adapter.VlanID -ne $null)
+                {
+                    $obj | Add-Member -NotePropertyName VlanID -NotePropertyValue $adapter.VlanID
+                }
+                if ($profile.IPv4Connectivity -ne $null)
+                {
+                    $obj | Add-Member -NotePropertyName IPv4Connectivity -NotePropertyValue $profile.IPv4Connectivity
+                }
+                if ($profile.NetworkCategory -ne $null)
+                {
+                    $obj | Add-Member -NotePropertyName NetworkCategory -NotePropertyValue $profile.NetworkCategory
+                }
+                if ($ip.IPAddress -ne $null)
+                {
+                    $obj | Add-Member -NotePropertyName IPv4 -NotePropertyValue "$($ip.IPAddress)/$($ip.PrefixLength)"
+                    $obj | Add-Member -NotePropertyName IPv4Type -NotePropertyValue "$($ip.Type)"
+                    $obj | Add-Member -NotePropertyName IPv4Origin -NotePropertyValue "$($ip.SuffixOrigin)"
+                }
+                if (($gateway | Join-String -Property NextHop -Separator "`n") -ne '')
+                {
+                    $obj | Add-Member -NotePropertyName IPv4Gateway -NotePropertyValue ($gateway | Join-String -Property NextHop -Separator "`n")
+                }
+                if (($dns.ServerAddresses -join "`n") -ne '')
+                {
+                    $obj | Add-Member -NotePropertyName IPv4DNS -NotePropertyValue ($dns.ServerAddresses -join "`n")   
+                }
+                if (($dnsv6.ServerAddresses -join "`n") -ne '')
+                {
+                    $obj | Add-Member -NotePropertyName IPv6DNS -NotePropertyValue ($dnsv6.ServerAddresses -join "`n")   
+                }
+                return $obj;
+            } `
+            | Where-Object -Property Virtual -ne False `
+            | Where-Object -Property Virtual -ne $null `
+            | Format-List -Property *
         }
         else
         {
@@ -381,15 +463,24 @@ function aliases
 set-alias -Name io -Value ionic
 set-alias -Name rn -Value react-native
 
-function vcode
+function vs
 {
-    $project = (Get-ChildItem -Path $args -Name -Include *.csproj);
-    devenv.exe $project
+    $project = (Get-ChildItem -Path $args -Name -Include *.sln);
     
+    if ($project -eq "" -or $project -eq $null)
+    {
+        $project = (Get-ChildItem -Path $args -Name -Include *.csproj);
+    }
+    
+    if ($project -eq "" -or $project -eq $null)
+    {
+        $project = ".";
+    }
+
+    devenv.exe $project
 }
 
 [System.Environment]::SetEnvironmentVariable('HOME', $ENV:USERPROFILE, 'User')
-
 cmds
 
 #source the work specific profiles
