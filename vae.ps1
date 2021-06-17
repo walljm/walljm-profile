@@ -209,7 +209,8 @@ function vpn
     }
     elseif ($ifc -eq 'wifi')
     {
-        $ifcName = "vEthernet (WIFI)"
+        $ifcName = "WIFI"
+
     }
 
     if ($cmd -eq "enable")
@@ -345,8 +346,10 @@ function nf
 
     if ($cmd -ne $null)
     {
+        $oldTitle = $host.ui.RawUI.WindowTitle
         $host.ui.RawUI.WindowTitle = "network faker: $cmd"
-        wsl -u root -- ./fake $cmd
+        wsl -u root bash -c "cd /home/walljm/ && ./nf.sh $cmd"
+        $host.ui.RawUI.WindowTitle = $oldTitle
         return
     }
 

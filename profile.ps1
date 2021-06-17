@@ -390,8 +390,9 @@ function show
         else
         {
             Get-NetRoute -IncludeAllCompartments | `
+                    Where-Object { $_.InterfaceAlias -Match "(?i).*$other.*" -or $_.DestinationPrefix -Match "(?i).*$other.*" -or $_.NextHop -Match "(?i).*$other.*"} | `
                     Format-Table -Property DestinationPrefix, NextHop, InterfaceMetric, RouteMetric, Protocol, State, Publish, TypeOfRoute, IsStatic, `
-                    InterfaceAlias, InterfaceIndex, PreferredLifetime, AdminDistance
+                    InterfaceAlias, InterfaceIndex, PreferredLifetime, AdminDistance 
         }
         
     }
