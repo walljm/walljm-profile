@@ -261,7 +261,7 @@ function show
 {
     $cmd, $other = $args
 
-    if ($cmd -like "ifc*")
+    if ($cmd -like "ifc*" -or $cmd -like "int*")
     {
         if ($other -like "lst")
         {
@@ -366,6 +366,7 @@ function show
                     AdminStatus, ifOperStatus, LinkSpeed, FullDuplex, MediaType, Virtual, `
                     DeviceWakeUpEnable
         }
+        return
     }
     elseif ($cmd -like "route*")
     {
@@ -394,24 +395,40 @@ function show
                     Format-Table -Property DestinationPrefix, NextHop, InterfaceMetric, RouteMetric, Protocol, State, Publish, TypeOfRoute, IsStatic, `
                     InterfaceAlias, InterfaceIndex, PreferredLifetime, AdminDistance 
         }
-        
+        return
     }
     elseif ($cmd -like "ip*")
     {
         Get-NetIPAddress -IncludeAllCompartments | `
                 Sort-Object InterfaceIndex | `
-                Format-Table -Property InterfaceIndex, InterfaceAlias, IPAddress, PrefixLength, PrefixOrigin, Type, ValidLifetime
+                Format-Table -Property InterfaceIndex, InterfaceAlias, IPAddress, PrefixLength, PrefixOrigin, Type, ValidLifetime;
+        return
     }
     elseif ($cmd -like "arp*")
     {
         Get-NetNeighbor -AddressFamily IPv4 -IncludeAllCompartments | `
                 Sort-Object InterfaceIndex, State, IPAddress | `
-                Format-Table -Property IPAddress, LinkLayerAddress, InterfaceIndex, InterfaceAlias, State
+                Format-Table -Property IPAddress, LinkLayerAddress, InterfaceIndex, InterfaceAlias, State;
+        return
     }
-    elseif ($cmd -like "lin*")
+    elseif ($cmd -like "wsl*")
     {
-        wsl --list --verbose --all
+        wsl --list --verbose --all;
+        return
     }
+
+    # help
+    write "help: show";
+    write ""
+    write "    show ifc             | shows all the interfaces and their status"
+    write "    show ifc lst         | shows all the interfaces and their status as a list"
+    write "    show ifc detail      | shows connected interfaces in detail as a list"
+    write "    show ifc             | shows all the interfaces and their status"
+    write "    show route           | shows the route table"
+    write "    show route details   | shows the route table"
+    write "    show ip              | shows the ips configured on the computer"
+    write "    show arp             | shows the arp table"
+    write "    show wsl             | lists the wsl distros installed"
 }
 
 

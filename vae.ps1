@@ -56,11 +56,14 @@ function cdpo
     {
         Write-Host  "cd $opsfolder\$args"
         cd $opsfolder\$args
+        
+        $host.ui.RawUI.WindowTitle = "cdpo \$args"
     }
     else
     {
         Write-Host  "cd $opsfolder"
         cd  $opsfolder
+        $host.ui.RawUI.WindowTitle = "cdpo"
     }
 }
 function dco
@@ -73,6 +76,8 @@ function dco
 
     Pop-Location
 }
+function dc1 { Invoke-Expression "$dockercompose -p t1 $args" }
+function dc2 { Invoke-Expression "$dockercompose -p t2 $args" }
 
 function ops
 {
@@ -316,6 +321,8 @@ function gitPull
 
 
 
+$fakeNetworksPath = "/mnt/c/Projects/fake_networks"
+$fakerBinary = "network-faker-251-linux-x64"
 function nf
 {
     param(
@@ -323,44 +330,34 @@ function nf
         [Parameter(Mandatory = $false, Position = 0,
             HelpMessage = "The name of a network: one, five, large or a cmd: enable, disable")]
         $cmd)
-
     if ($cmd -eq "enable")
     {
-        $ip = wsl -u root -- hostname -I
         $ifIndex = Get-NetIPAddress -IncludeAllCompartments | `
                 Where-Object InterfaceAlias -eq 'vEthernet (WSL)' | `
                 Where-Object AddressFamily -eq 'IPv4' | `
                 Select-Object -ExpandProperty InterfaceIndex
-        New-NetRoute -DestinationPrefix 100.64.0.0/12 -NextHop "${$ip}" -InterfaceIndex $ifIndex -Confirm:$false
-        wsl -u root -- ip addr add 100.64.0.0/10 dev lo
-        show route
+        New-NetRoute -DestinationPrefix 100.64.0.0/12 -NextHop "0.0.0.0" -InterfaceIndex $ifIndex -Confirm:$false
+        wsl -u root -- ip addr add 100.64.0.0/12 dev lo
         return
     }
-
     if ($cmd -eq "disable")
     {
         remove-netroute -destinationprefix 100.64.0.0/12 -Confirm:$false
-        show route
         return
     }
-
     if ($cmd -ne $null)
     {
         $oldTitle = $host.ui.RawUI.WindowTitle
         $host.ui.RawUI.WindowTitle = "network faker: $cmd"
-        wsl -u root bash -c "cd /home/walljm/ && ./nf.sh $cmd"
+        wsl -u root bash -c "cd ~ && ./$fakerBinary --NetworkPath=$fakeNetworksPath/$cmd --Logging:LogLevel:Default=Information"
         $host.ui.RawUI.WindowTitle = $oldTitle
         return
     }
-
-
     Write-Host  ""
     Write-Host  "Syntax: nf cmd"
     Write-Host  ""
     Write-Host  " cmd          - name of one of the fake networks installed in C:\Projects\fake_networks, or enable,disable to setup the route or remove it"
-
     return
-
 }
 
 function ignoreDockerCompose
