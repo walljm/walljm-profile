@@ -502,10 +502,10 @@ function vs
 cmds
 
 #source the work specific profiles
-. C:\Projects\walljm\winprofile\vae.ps1
-. C:\Projects\walljm\winprofile\migo.ps1
+. C:\Projects\walljm\windows-profile\vae.ps1
+. C:\Projects\walljm\windows-profile\migo.ps1
 
 # https://github.com/ili101/Join-Object
-. C:\Projects\walljm\winprofile\join.ps1
+. C:\Projects\walljm\windows-profile\join.ps1
 
 echo ""
