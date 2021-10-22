@@ -1,0 +1,11 @@
+ServerAliveInterval 60
+Host *
+    AddKeysToAgent yes
+Host gitlab.com
+    HostName gitlab.com
+    User git
+    IdentityFile ~/.ssh/id_rsa
+Host gitlab.com-personal
+    HostName gitlab.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519
