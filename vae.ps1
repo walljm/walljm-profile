@@ -1,19 +1,39 @@
 $opsfolder = "$projects\vae\operations"
-$miscfolder = "$projects\vae\misc"
-$engfolder = "$projects\vae\engineering"
-$dockercompose = "docker-compose -f docker-compose.yml -f docker-compose.walljm.yml"
+$dockercompose = "docker compose -f docker-compose.yml -f docker-compose.walljm.yml"
+
+function copy2one
+{
+    invoke "dco down"
+    invoke "dc1 down -v"
+    invoke "dc2 down -v"
+
+    invoke "dco up -d postgres"
+    invoke "dco exec postgres ""su postgres -c 'pg_dump --clean --format=c itpie > /var/lib/postgresql/itpie.dump'"""
+    invoke "dco cp postgres:/var/lib/postgresql/itpie.dump ./itpie.dump"
+    invoke "dco down"
+
+    invoke "dc1 up -d postgres"
+    invoke "dc1 cp ./itpie.dump postgres:/var/lib/postgresql/itpie.dump"
+    invoke "dc1 exec postgres ""su postgres -c 'pg_restore -v --clean --create --format=c -d postgres < /var/lib/postgresql/itpie.dump'"""
+    invoke "dc1 up -d --build"
+    invoke "rm itpie.dump"
+}
 
 function vcmds
 { 
-    Write-Host  "   cdpo == $opsfolder\packaging"
-    Write-Host  "    dco == dc -f docker-compose.yml -f docker-compose.walljm.yml"
-    Write-Host  "    ops == demo|test|dev|help -c|clean -p|pull -h|headless -d|down -gp|gitpull"
-    Write-Host  "    vpn == vpn enable|disable|start -i|ifIndex -v|vpn"
-    Write-Host  "    dev == dev dbd|dbdate|gp|gitpull $args"
+    Write-Host  "      cdpo == $opsfolder"
+    Write-Host  "       dco == $dockercompose"
+    Write-Host  "       dc1 == $dockercompose -p t1 args"
+    Write-Host  "       dc2 == $dockercompose -p t2 args"
+    Write-Host  "  -----------------------------------------------------------"
+    Write-Host  "       dev | dev dbd|dbdate args"
+    Write-Host  "       vpn | vpn enable|disable|start -i|ifIndex -v|vpn"
+    Write-Host  "  copy2one | backup from dco and restore to dc1"
     Write-Host  ""
     Write-Host  "  ignoreDockerCompose | ignores the docker-compose file so you can make changes without running into issues"
     write-host  "            setVaeEnv | sets the vae environment variabls for the user"
     Write-Host  ""
+
 }
 
 function cdpo
@@ -66,105 +86,31 @@ function cdpo
         $host.ui.RawUI.WindowTitle = "cdpo"
     }
 }
+
 function dco
 {
-    $cmds = $args;
-
-    push-location $opsfolder;
+    Push-Location $opsfolder;
     
-    Invoke-Expression "$dockercompose $cmds"
+    Invoke-Expression "$dockercompose $args"
 
     Pop-Location
 }
-function dc1 { Invoke-Expression "$dockercompose -p t1 $args" }
-function dc2 { Invoke-Expression "$dockercompose -p t2 $args" }
 
-function ops
+function dc1
 {
-    param(
-        [Parameter(Mandatory = $false,
-            HelpMessage = "If used, does a 'down -v' before bring the system up.")]
-        [Alias("clean")]
-        [Switch]
-        $c,
-        [Parameter(Mandatory = $false,
-            HelpMessage = "If used, stops the webclient and itpie-api containers, so you can run them from source.")]
-        [Alias("headless")]
-        [Switch]
-        $h,
-        [Parameter(Mandatory = $false,
-            HelpMessage = "If used, stops all services using docker-compose down.")]
-        [Alias("down")]
-        [Switch]
-        $d,
-        [String]
-        [Parameter(Mandatory = $false, Position = 0,
-            HelpMessage = "Enter one of the following: test, demo, dev, git")]
-        [ValidateSet("git", "help", "")]
-        $cmd)
-
-    push-location;
+    Push-Location $opsfolder;
     
-    
-    if ($cmd -eq "help")
-    {
-        Write-Host  ""
-        Write-Host  "Syntax: ops -c|clean -h|headless -d|down -gp|gitpull"
-        Write-Host  ""
-        Write-Host  " cmd          - one of the following: 'help', ''"
-        Write-Host  " -c|clean     - If used, does a 'down -v' before bring the system up."
-        Write-Host  " -h|headless  - If used, stops the webclient and itpie-api containers, so you can run them from source."
-        Write-Host  " -d|down      - If used, stops all services using $dockercompose down"
-		
-        pop-location;
-        return
-    }
-    
-    
-    Write-Host  "$opsfolder"
-    cd "$opsfolder"
-        
-    if ($d)
-    {
-        writeHeader " Stopping OPS..."
-        invoke "$dockercompose down"
-    }
-    else 
-    {
-        if ($c)
-        {
-            writeHeader " Cleaning OPS..."
-            invoke "$dockercompose down -v"
-        }
+    Invoke-Expression "$dockercompose -p t1 $args" 
 
-        writeHeader " Starting OPS..."
-        invoke "$dockercompose up -d --build --remove-orphans"
-
-        if ($h)
-        {
-            invoke "$dockercompose stop itpie-api"
-            invoke "$dockercompose stop webclient"
-        }
-    }	
-
-    pop-location;
+    Pop-Location
 }
-
-function invoke
+function dc2
 {
-    param(
-        [String]
-        [Parameter(Mandatory = $true, Position = 0)]
-        $cmd)
-    Write-Host $cmd
-    Invoke-Expression $cmd
-}
-
-function writeHeader
-{
-    Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-    Write-Host  " $args..."  -ForegroundColor Yellow
-    Write-Host "---------------------------------------------"  -ForegroundColor Yellow
+    Push-Location $opsfolder;
+    
+    Invoke-Expression "$dockercompose -p t2 $args"
+    
+    Pop-Location 
 }
 
 function vpn
@@ -256,13 +202,12 @@ function dev
 {
     param(
         [String]
-        [Parameter(Mandatory = $true, Position = 0,
-            HelpMessage = "Action: dbdate|dbd gp|gitpull")]
+        [Parameter(Mandatory = $true, Position = 0, HelpMessage = "Action: dbdate|dbd migrate")]
         $action,
         [String]
-        [Parameter(Mandatory = $false, Position = 1,
-            HelpMessage = "Additional args")]
+        [Parameter(Mandatory = $false, HelpMessage = "Additional args")]
         $args)
+
     if ($action -ne $null)
     {
         if (($action -eq 'dbdate') -or ($action -eq 'dbd'))
@@ -271,16 +216,9 @@ function dev
             Set-Clipboard -V "$((Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmss'))$args"
             return
         }
-
-        if (($action -eq 'gitpull') -or ($action -eq 'gp'))
+        elseif (($action -eq 'migrate'))
         {
-            gitPullFolder "$projects\walljm";
-
-            gitPullFolder $miscfolder;
-
-            gitPull $opsfolder;
-            gitPull $engfolder;
-
+            dotnet run --project $opsfolder/source/services/itpie-api/ITPIE.API.csproj
             return
         }
     }
@@ -289,40 +227,13 @@ function dev
     Write-Host  "Syntax: dev cmd $args"
     Write-Host  ""
     Write-Host  " dbd|dbdate  - Creates a date stamp in the format used for migrations. "
-    Write-Host  " gp|gitpull  - If used, does a gil pull inside of each directory in the $opsfolder"
 
     return
 
 }
-
-function gitPullFolder
-{
-    $folder = $args;
-    Write-Host  "";
-    get-childitem $folder -directory | where-object { $_.Name -Match "^\w" } | foreach-object {
-        gitPull "$folder\$($_.Name)";
-    }
-    return
-}
-
-function gitPull
-{
-    $folder = $args;
-    $name = (getDirName "$folder\");
-
-    push-location "$folder";
-    Write-Host "---------------------------------------------"  -ForegroundColor Yellow
-    Write-Host "$name" -ForegroundColor Yellow
-    Write-Host "---------------------------------------------" -ForegroundColor Yellow
-    git pull;
-    Write-Host  "";
-    Pop-Location
-}
-
-
 
 $fakeNetworksPath = "/mnt/c/Projects/fake_networks"
-$fakerBinary = "network-faker-251-linux-x64"
+$fakerBinary = "network-faker-268-linux-x64"
 function nf
 {
     param(

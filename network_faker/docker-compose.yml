@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  faker:
+    image: itpie/network-faker:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    networks:
+      default:
+        ipv4_address: 169.254.252.2
+    volumes:
+      - c:\Projects\fake_networks\small:/fake_network:ro
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 169.254.252.0/28
