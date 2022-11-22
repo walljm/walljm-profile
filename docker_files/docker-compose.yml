@@ -2,7 +2,7 @@ version: "3"
 
 services:
   proxy:
-    image: nginx:1.15-alpine
+    image: nginx:stable-alpine
     restart: unless-stopped
     volumes:
       - ./proxy:/etc/nginx/conf.d
@@ -10,27 +10,3 @@ services:
     ports:
       - "80:80"
       - "443:443"
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: jason@walljm.com
-      PGADMIN_DEFAULT_PASSWORD: password
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    volumes:
-       - pgadmin:/var/lib/pgadmin
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - portainer_data:/data
-    ports:
-      - 9000:9000
-volumes:
-  portainer_data:
-  pgadmin:

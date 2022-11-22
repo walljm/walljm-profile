@@ -5,7 +5,6 @@ function copy2one
 {
     invoke "dco down"
     invoke "dc1 down -v"
-    invoke "dc2 down -v"
 
     invoke "dco up -d postgres"
     invoke "dco exec postgres ""su postgres -c 'pg_dump --clean --format=c itpie > /var/lib/postgresql/itpie.dump'"""
@@ -19,12 +18,23 @@ function copy2one
     invoke "rm itpie.dump"
 }
 
+
+function dumpDco
+{
+    invoke "dco down"
+    invoke "dc1 down -v"
+
+    invoke "dco up -d postgres"
+    invoke "dco exec postgres ""su postgres -c 'pg_dump --clean --format=c itpie > /var/lib/postgresql/itpie.dump'"""
+    invoke "dco cp postgres:/var/lib/postgresql/itpie.dump ./itpie.dump"
+    invoke "dco down"
+}
+
 function vcmds
 { 
     Write-Host  "      cdpo == $opsfolder"
     Write-Host  "       dco == $dockercompose"
     Write-Host  "       dc1 == $dockercompose -p t1 args"
-    Write-Host  "       dc2 == $dockercompose -p t2 args"
     Write-Host  "  -----------------------------------------------------------"
     Write-Host  "       dev | dev dbd|dbdate args"
     Write-Host  "       vpn | vpn enable|disable|start -i|ifIndex -v|vpn"
@@ -99,20 +109,19 @@ function dco
 function dc1
 {
     Push-Location $opsfolder;
-    
-    Invoke-Expression "$dockercompose -p t1 $args" 
+    $cmd, $arguments = $args;
+
+    if ($cmd -eq "reset")
+    {
+        invoke "dc1 down -v"
+        invoke "dc1 up -d --build"
+        return
+    }
+
+    invoke "$dockercompose -p t1 $args" 
 
     Pop-Location
 }
-function dc2
-{
-    Push-Location $opsfolder;
-    
-    Invoke-Expression "$dockercompose -p t2 $args"
-    
-    Pop-Location 
-}
-
 function vpn
 {
     param(

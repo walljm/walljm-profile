@@ -137,9 +137,11 @@ function gt {
     $cmd, $other, $other2 = $args
     
     if ($cmd -eq "fetch") {
-        invoke "git fetch --all --prune --prune-tags"
-        invoke "git branch -v"
+        invoke "git fetch --all --prune --prune-tags $other $other2"
+        Write-Host ""
         invoke "git status"
+        Write-Host ""
+        invoke "git prune"
     }
     elseif ($cmd -eq "update") {
         invoke "git checkout $other --force"
@@ -157,12 +159,6 @@ function gt {
         $t1, $t2 = $other
         invoke "git checkout $t1"
         invoke "git rebase $t2"
-    }
-    elseif (($cmd -eq "contracts") -and ($other -eq "pull")) {
-        invoke "git subtree pull --prefix src/ITPIE.Contracts --squash contracts $other2"
-    }
-    elseif (($cmd -eq "contracts") -and ($other -eq "push")) {
-        invoke "git subtree push --prefix src/ITPIE.Contracts --squash contracts $other2"
     }
     else {
         invoke "git $cmd $other"
@@ -361,6 +357,17 @@ function invoke
     Write-Host $cmd
     Invoke-Expression $cmd
 }
+
+
+## Add argument completer for the dotnet CLI tool
+$scriptblock = {
+    param($wordToComplete, $commandAst, $cursorPosition)
+    dotnet complete --position $cursorPosition $commandAst.ToString() |
+        ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+        }
+}
+Register-ArgumentCompleter -Native -CommandName dotnet -ScriptBlock $scriptblock
 
 ####
 # Helper Functions
