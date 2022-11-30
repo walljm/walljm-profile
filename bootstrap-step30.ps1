@@ -22,5 +22,5 @@ winget install --silent --accept-package-agreements --accept-source-agreements -
 winget install --silent --accept-package-agreements --accept-source-agreements --id Microsoft.dotnet
 winget install --silent --accept-package-agreements --accept-source-agreements --id OpenJS.NodeJS -v 16.9.0
 
-winget install --accept-package-agreements --accept-source-agreements --id Microsoft.VisualStudioCode
+# winget install --accept-package-agreements --accept-source-agreements --id Microsoft.VisualStudioCode
 # restart

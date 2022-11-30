@@ -138,9 +138,9 @@ function gt {
     
     if ($cmd -eq "fetch") {
         invoke "git fetch --all --prune --prune-tags $other $other2"
-        Write-Host ""
+        Write-Host "------------------------------------------------------------------------------------------"
         invoke "git status"
-        Write-Host ""
+        Write-Host "------------------------------------------------------------------------------------------"
         invoke "git prune"
     }
     elseif ($cmd -eq "update") {

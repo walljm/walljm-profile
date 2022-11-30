@@ -1,46 +1,15 @@
 $opsfolder = "$projects\vae\operations"
 $dockercompose = "docker compose -f docker-compose.yml -f docker-compose.walljm.yml"
 
-function copy2one
-{
-    invoke "dco down"
-    invoke "dc1 down -v"
-
-    invoke "dco up -d postgres"
-    invoke "dco exec postgres ""su postgres -c 'pg_dump --clean --format=c itpie > /var/lib/postgresql/itpie.dump'"""
-    invoke "dco cp postgres:/var/lib/postgresql/itpie.dump ./itpie.dump"
-    invoke "dco down"
-
-    invoke "dc1 up -d postgres"
-    invoke "dc1 cp ./itpie.dump postgres:/var/lib/postgresql/itpie.dump"
-    invoke "dc1 exec postgres ""su postgres -c 'pg_restore -v --clean --create --format=c -d postgres < /var/lib/postgresql/itpie.dump'"""
-    invoke "dc1 up -d --build"
-    invoke "rm itpie.dump"
-}
-
-
-function dumpDco
-{
-    invoke "dco down"
-    invoke "dc1 down -v"
-
-    invoke "dco up -d postgres"
-    invoke "dco exec postgres ""su postgres -c 'pg_dump --clean --format=c itpie > /var/lib/postgresql/itpie.dump'"""
-    invoke "dco cp postgres:/var/lib/postgresql/itpie.dump ./itpie.dump"
-    invoke "dco down"
-}
-
 function vcmds
 { 
     Write-Host  "      cdpo == $opsfolder"
     Write-Host  "       dco == $dockercompose"
     Write-Host  "       dc1 == $dockercompose -p t1 args"
     Write-Host  "  -----------------------------------------------------------"
-    Write-Host  "       dev | dev dbd|dbdate args"
-    Write-Host  "       vpn | vpn enable|disable|start -i|ifIndex -v|vpn"
-    Write-Host  "  copy2one | backup from dco and restore to dc1"
+    Write-Host  "       itpie | dbd|dbdate|migrate|start|dump|restore|copy args"
+    Write-Host  "         vpn | vpn enable|disable|start -i|ifIndex -v|vpn"
     Write-Host  ""
-    Write-Host  "  ignoreDockerCompose | ignores the docker-compose file so you can make changes without running into issues"
     write-host  "            setVaeEnv | sets the vae environment variabls for the user"
     Write-Host  ""
 
@@ -127,22 +96,9 @@ function vpn
     param(
         [String]
         [Parameter(Mandatory = $false, Position = 0,
-            HelpMessage = "Enter one of the following: enable, disable")]
-        [ValidateSet("enable", "disable", "start")]
-        $cmd,
-        [Parameter(Mandatory = $false,
-            HelpMessage = "The interface index")]
-        [Alias("i")]
-        [ValidateSet("wifi", "dock")]
-        [AllowNull()]
-        [String]
-        $ifc,
-        [Parameter(Mandatory = $false,
-            HelpMessage = "The ip address of the vpn proxy")]
-        [Alias("v")]
-        [AllowNull()]
-        [String]
-        $vpn)
+            HelpMessage = "Enter one of the following: start")]
+        [ValidateSet("start")]
+        $cmd)
 
     if ($cmd -eq "start")
     {
@@ -151,67 +107,18 @@ function vpn
         return
     }
 
-    
-    if ($PSBoundParameters.ContainsKey('vpn') -eq $false)
-    {
-        # set a default value.
-        $vpn = "192.168.1.54"
-    }
-
-    if ($PSBoundParameters.ContainsKey('ifc') -eq $false)
-    {
-        # set a default value.
-        $ifcName = "EthernetDock"
-    }
-    elseif ($ifc -eq 'dock')
-    {
-        $ifcName = "EthernetDock"
-    }
-    elseif ($ifc -eq 'wifi')
-    {
-        $ifcName = "WIFI"
-
-    }
-
-    if ($cmd -eq "enable")
-    {
-
-        $ifIndex = Get-NetIPAddress -IncludeAllCompartments | `
-                Where-Object InterfaceAlias -eq $ifcName | `
-                Where-Object AddressFamily -eq 'IPv4' | `
-                Select-Object -ExpandProperty InterfaceIndex
-
-        Set-DnsClientServerAddress -InterfaceIndex $ifIndex -ServerAddresses ($vpn)
-
-        New-NetRoute -DestinationPrefix 10.0.0.0/8 -nexthop $vpn -InterfaceIndex $ifIndex -Confirm:$false
-        New-NetRoute -DestinationPrefix 172.16.0.0/12 -nexthop $vpn -InterfaceIndex $ifIndex -Confirm:$false
-        return
-    }
-    elseif ($cmd -eq "disable")
-    {
-        Remove-NetRoute -DestinationPrefix 10.0.0.0/8 -Confirm:$false
-        Remove-NetRoute -DestinationPrefix 172.16.0.0/12 -Confirm:$false
-        Set-DnsClientServerAddress -InterfaceIndex $ifIndex -ServerAddresses("192.168.1.1")
-        return
-    }
 
     Write-Host  ""
-    Write-Host  "Syntax: vpn cmd -i|ifc -v|vpn"
-    Write-Host  ""
-    Write-Host  " cmd         - one of the following: 'enable', 'disable', 'help'"
-    Write-Host  " -i|ifc      - one of the following: 'dock', 'wifi' defaults to 'dock'"
-    Write-Host  " -v|vpn      - The ip address of the vpn proxy"
-		
-    pop-location;
+    Write-Host  "Syntax: vpn start"
+
     return
-
 }
 
-function dev
+function itpie
 {
     param(
         [String]
-        [Parameter(Mandatory = $true, Position = 0, HelpMessage = "Action: dbdate|dbd migrate")]
+        [Parameter(Mandatory = $false, Position = 0, HelpMessage = "Action")]
         $action,
         [String]
         [Parameter(Mandatory = $false, HelpMessage = "Additional args")]
@@ -225,66 +132,75 @@ function dev
             Set-Clipboard -V "$((Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmss'))$args"
             return
         }
-        elseif (($action -eq 'migrate'))
+        elseif (($action -eq 'migrate') -or ($action -eq 'm'))
         {
-            dotnet run --project $opsfolder/source/services/itpie-api/ITPIE.API.csproj
+            Push-Location $opsfolder/source/services/itpie-api
+            invoke "dotnet run -- migrate"
+            Pop-Location
             return
+        }
+        elseif (($action -eq 'start'))
+        {
+            Push-Location $opsfolder/source/services/itpie-api
+            invoke "dotnet run -- migrate"
+            invoke "dotnet run"
+            Pop-Location
+            return
+        }
+        elseif (($action -eq 'restore'))
+        {
+            invoke "dco down"
+            invoke "dc1 down -v"
+        
+            invoke "dc1 up -d postgres"
+            # otherwise... it might try and fail because the server isn't up yet.
+            Start-Sleep -Seconds 5 
+            invoke "dc1 cp ./itpie.dump postgres:/var/lib/postgresql/itpie.dump"
+            invoke "dc1 exec postgres ""su postgres -c 'pg_restore -v --clean --create --format=c -d postgres < /var/lib/postgresql/itpie.dump'"""
+            invoke "dc1 up -d --build"
+        }
+        elseif (($action -eq 'dump'))
+        {
+            invoke "dco down"
+            invoke "dc1 down -v"
+        
+            invoke "dco up -d postgres"
+            invoke "dco exec postgres ""su postgres -c 'pg_dump --clean --format=c itpie > /var/lib/postgresql/itpie.dump'"""
+            invoke "dco cp postgres:/var/lib/postgresql/itpie.dump ./itpie.dump"
+            invoke "dco down"
+        }
+        elseif (($action -eq 'copy'))
+        {
+            invoke "dco down"
+            invoke "dc1 down -v"
+    
+            invoke "dco up -d postgres"
+            invoke "dco exec postgres ""su postgres -c 'pg_dump --clean --format=c itpie > /var/lib/postgresql/itpie.dump'"""
+            invoke "dco cp postgres:/var/lib/postgresql/itpie.dump ./itpie.dump"
+            invoke "dco down"
+    
+            invoke "dc1 up -d postgres"
+            # otherwise... it might try and fail because the server isn't up yet.
+            Start-Sleep -Seconds 5
+            invoke "dc1 cp ./itpie.dump postgres:/var/lib/postgresql/itpie.dump"
+            invoke "dc1 exec postgres ""su postgres -c 'pg_restore -v --clean --create --format=c -d postgres < /var/lib/postgresql/itpie.dump'"""
+            invoke "dc1 up -d --build"
+            invoke "rm itpie.dump"
         }
     }
 
     Write-Host  ""
-    Write-Host  "Syntax: dev cmd $args"
+    Write-Host  "Syntax: itpie cmd $args"
     Write-Host  ""
     Write-Host  " dbd|dbdate  - Creates a date stamp in the format used for migrations. "
+    Write-Host  " m|migrate   - Runs the itpie-api migration."
+    Write-Host  " start       - Runs the itpie-api migration then starts the server."
+    Write-Host  " dump        - Performs a database dump of the long running system."
+    Write-Host  " restore     - Performs a database restore to the development system."
+    Write-Host  " copy        - Performs a copy of the database from the long running to the development system."
 
     return
 
-}
-
-$fakeNetworksPath = "/mnt/c/Projects/fake_networks"
-$fakerBinary = "network-faker-268-linux-x64"
-function nf
-{
-    param(
-        [String]
-        [Parameter(Mandatory = $false, Position = 0,
-            HelpMessage = "The name of a network: one, five, large or a cmd: enable, disable")]
-        $cmd)
-    if ($cmd -eq "enable")
-    {
-        $ifIndex = Get-NetIPAddress -IncludeAllCompartments | `
-                Where-Object InterfaceAlias -eq 'vEthernet (WSL)' | `
-                Where-Object AddressFamily -eq 'IPv4' | `
-                Select-Object -ExpandProperty InterfaceIndex
-        New-NetRoute -DestinationPrefix 100.64.0.0/12 -NextHop "0.0.0.0" -InterfaceIndex $ifIndex -Confirm:$false
-        wsl -u root -- ip addr add 100.64.0.0/12 dev lo
-        return
-    }
-    if ($cmd -eq "disable")
-    {
-        remove-netroute -destinationprefix 100.64.0.0/12 -Confirm:$false
-        return
-    }
-    if ($cmd -ne $null)
-    {
-        $oldTitle = $host.ui.RawUI.WindowTitle
-        $host.ui.RawUI.WindowTitle = "network faker: $cmd"
-        wsl -u root bash -c "cd ~ && ./$fakerBinary --NetworkPath=$fakeNetworksPath/$cmd --Logging:LogLevel:Default=Information"
-        $host.ui.RawUI.WindowTitle = $oldTitle
-        return
-    }
-    Write-Host  ""
-    Write-Host  "Syntax: nf cmd"
-    Write-Host  ""
-    Write-Host  " cmd          - name of one of the fake networks installed in C:\Projects\fake_networks, or enable,disable to setup the route or remove it"
-    return
-}
-
-function ignoreDockerCompose
-{
-    push-location "$opsfolder";
-    git update-index --assume-unchanged .\docker-compose.override.yml
-    Pop-Location
 }
 
 function setVaeEnv
