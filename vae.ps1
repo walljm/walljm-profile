@@ -158,6 +158,7 @@ function itpie
             invoke "dc1 cp ./itpie.dump postgres:/var/lib/postgresql/itpie.dump"
             invoke "dc1 exec postgres ""su postgres -c 'pg_restore -v --clean --create --format=c -d postgres < /var/lib/postgresql/itpie.dump'"""
             invoke "dc1 up -d --build"
+            return
         }
         elseif (($action -eq 'dump'))
         {
@@ -168,6 +169,7 @@ function itpie
             invoke "dco exec postgres ""su postgres -c 'pg_dump --clean --format=c itpie > /var/lib/postgresql/itpie.dump'"""
             invoke "dco cp postgres:/var/lib/postgresql/itpie.dump ./itpie.dump"
             invoke "dco down"
+            return
         }
         elseif (($action -eq 'copy'))
         {
@@ -186,6 +188,7 @@ function itpie
             invoke "dc1 exec postgres ""su postgres -c 'pg_restore -v --clean --create --format=c -d postgres < /var/lib/postgresql/itpie.dump'"""
             invoke "dc1 up -d --build"
             invoke "rm itpie.dump"
+            return
         }
     }
 
