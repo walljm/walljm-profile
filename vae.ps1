@@ -142,8 +142,10 @@ function itpie
         elseif (($action -eq 'start'))
         {
             Push-Location $opsfolder/source/services/itpie-api
+            Write-Output "Moving to folder: $opsfolder/source/services/itpie-api"
             invoke "dotnet run -- migrate"
             invoke "dotnet run"
+            Write-Output "Moving back to original folder"
             Pop-Location
             return
         }
@@ -190,6 +192,13 @@ function itpie
             invoke "rm itpie.dump"
             return
         }
+        elseif (($action -eq 'rebuild') -or ($action -eq 're'))
+        {
+            invoke "dc1 down -v"
+            invoke "dc1 up -d --build"
+            
+            return
+        }
     }
 
     Write-Host  ""
@@ -201,17 +210,10 @@ function itpie
     Write-Host  " dump        - Performs a database dump of the long running system."
     Write-Host  " restore     - Performs a database restore to the development system."
     Write-Host  " copy        - Performs a copy of the database from the long running to the development system."
+    Write-Host  " re|rebuild  - dc1 down -v && dc1 up -d --build"
 
     return
 
-}
-
-function setVaeEnv
-{
-    [System.Environment]::SetEnvironmentVariable('ITPIE_LICENSE__KEY', 'aMORtqjHzyOFQIHeGPQ8e0nT1%2BeZYanKKtZEpDF2CJ3mvQYCGYwGMIsxbvqpBLlOWRnhhO8gW1G8djUtDSLx4A%3D%3D', 'User')
-    [System.Environment]::SetEnvironmentVariable('ASPNETCORE_ENVIRONMENT', 'Development', 'User')
-    [System.Environment]::SetEnvironmentVariable('NEXTGEN_ENCRYPTION_KEY', 'ErbDoZ+8v/jKRFgrgZcqycU31awVnWR4C/2pIvwl/TQ=', 'User')
-    [System.Environment]::SetEnvironmentVariable('NEXTGEN_ENCRYPTION_IV', 'gZ2zXALeWPLqo1Vw1ElT5w==', 'User')
 }
 
 vcmds

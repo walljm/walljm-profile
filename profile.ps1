@@ -133,15 +133,21 @@ function dc {
     docker compose $args
 }
 
+function fetch {
+    $other, $other2 = $args
+
+    invoke "git fetch --all --prune --prune-tags $other $other2"
+    Write-Host "------------------------------------------------------------------------------------------"
+    invoke "git status"
+    Write-Host "------------------------------------------------------------------------------------------"
+    invoke "git prune"
+}
+
 function gt {
     $cmd, $other, $other2 = $args
     
     if ($cmd -eq "fetch") {
-        invoke "git fetch --all --prune --prune-tags $other $other2"
-        Write-Host "------------------------------------------------------------------------------------------"
-        invoke "git status"
-        Write-Host "------------------------------------------------------------------------------------------"
-        invoke "git prune"
+        fetch $other $other2
     }
     elseif ($cmd -eq "update") {
         invoke "git checkout $other --force"
@@ -342,10 +348,18 @@ function vs {
     }
     
     if ($project -eq "" -or $null -eq $project) {
+        $project = (Get-ChildItem -Path $args -Name -Include *.sln);
+    }
+
+    if ($project -eq "" -or $null -eq $project) {
         $project = ".";
     }
 
     & "C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\IDE\devenv.exe" $project
+}
+function which($name)
+{
+    Get-Command $name | Select-Object -ExpandProperty Definition
 }
 
 function invoke
@@ -384,8 +398,5 @@ cmds
 
 #source the work specific profiles
 . C:\Projects\walljm\windows-profile\vae.ps1
-
-# https://github.com/ili101/Join-Object
-# . C:\Projects\walljm\windows-profile\join.ps1
 
 echo ""
